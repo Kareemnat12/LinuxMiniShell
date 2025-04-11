@@ -1123,3 +1123,145 @@
 [2025-04-11 00:11:53] Entered get_string()
 [2025-04-11 00:11:53] Allocating initial buffer of size 1024
 [2025-04-11 00:11:53] Reading input characters
+[2025-04-11 20:41:52] Shell starting up - PID: 3562, User: student
+[2025-04-11 20:41:52] Initializing shell environment
+[2025-04-11 20:41:52] Loading dangerous commands file: ./f.txt
+[2025-04-11 20:41:52] Entered read_file_lines() for file: ./f.txt
+[2025-04-11 20:41:52] Entered count_lines() for file: ./f.txt
+[2025-04-11 20:41:52] Counting lines in file
+[2025-04-11 20:41:52] File contains 4 lines
+[2025-04-11 20:41:52] Exiting count_lines() with result: 4
+[2025-04-11 20:41:52] Opening file for reading
+[2025-04-11 20:41:52] Allocating memory for 4 lines
+[2025-04-11 20:41:52] Reading lines from file
+[2025-04-11 20:41:52] Read line 0: "rm -rf /"
+[2025-04-11 20:41:52] Read line 1: "sudo reboot"
+[2025-04-11 20:41:52] Read line 2: "shutdown -h now"
+[2025-04-11 20:41:52] Read line 3: "mkfs.ext4 /dev/sda"
+[2025-04-11 20:41:52] Successfully read 4 lines from file
+[2025-04-11 20:41:52] Exiting read_file_lines()
+[2025-04-11 20:41:52] Loaded 4 dangerous commands
+[2025-04-11 20:41:52] Entering command processing loop
+[2025-04-11 20:41:52] Waiting for user input
+[2025-04-11 20:41:52] Entered get_string()
+[2025-04-11 20:41:52] Allocating initial buffer of size 1024
+[2025-04-11 20:41:52] Reading input characters
+[2025-04-11 20:42:32] Input read complete, length: 5 characters
+[2025-04-11 20:42:32] Exiting get_string() with valid input
+[2025-04-11 20:42:32] Received input: ls -l
+[2025-04-11 20:42:32] Started command timer
+[2025-04-11 20:42:32] Checking for multiple spaces
+[2025-04-11 20:42:32] Entered checkMultipleSpaces() with string: "ls -l"
+[2025-04-11 20:42:32] Space character found, current count: 1
+[2025-04-11 20:42:32] Exiting checkMultipleSpaces() with result: 0 (no multiple spaces)
+[2025-04-11 20:42:32] Space check passed
+[2025-04-11 20:42:32] Splitting input into arguments
+[2025-04-11 20:42:32] Entered split_to_args() with string: "ls -l", delimiter: " "
+[2025-04-11 20:42:32] Duplicating input string
+[2025-04-11 20:42:32] Starting tokenization of string
+[2025-04-11 20:42:32] Processing token: "ls"
+[2025-04-11 20:42:32] Token added to args array at position 0
+[2025-04-11 20:42:32] Processing token: "-l"
+[2025-04-11 20:42:32] Token added to args array at position 1
+[2025-04-11 20:42:32] Tokenization complete, found 2 arguments
+[2025-04-11 20:42:32] Exiting split_to_args() with 2 arguments
+[2025-04-11 20:42:32] Arguments successfully parsed, count: 2
+[2025-04-11 20:42:32] Arg[0]: ls
+[2025-04-11 20:42:32] Arg[1]: -l
+[2025-04-11 20:42:32] Checking if command is dangerous
+[2025-04-11 20:42:32] Entered is_dangerous_command()
+[2025-04-11 20:42:32] Checking command "ls" against 4 dangerous commands
+[2025-04-11 20:42:32] Comparing with dangerous command 0: "rm -rf /"
+[2025-04-11 20:42:32] Entered split_to_args() with string: "rm -rf /", delimiter: " "
+[2025-04-11 20:42:32] Duplicating input string
+[2025-04-11 20:42:32] Starting tokenization of string
+[2025-04-11 20:42:32] Processing token: "rm"
+[2025-04-11 20:42:32] Token added to args array at position 0
+[2025-04-11 20:42:32] Processing token: "-rf"
+[2025-04-11 20:42:32] Token added to args array at position 1
+[2025-04-11 20:42:32] Processing token: "/"
+[2025-04-11 20:42:32] Token added to args array at position 2
+[2025-04-11 20:42:32] Tokenization complete, found 3 arguments
+[2025-04-11 20:42:32] Exiting split_to_args() with 3 arguments
+[2025-04-11 20:42:32] Comparing command names: "ls" vs "rm"
+[2025-04-11 20:42:32] Entered free_args()
+[2025-04-11 20:42:32] Freeing argument at index 0
+[2025-04-11 20:42:32] Freeing argument at index 1
+[2025-04-11 20:42:32] Freeing argument at index 2
+[2025-04-11 20:42:32] Freed args array with 3 elements
+[2025-04-11 20:42:32] Exiting free_args()
+[2025-04-11 20:42:32] Comparing with dangerous command 1: "sudo reboot"
+[2025-04-11 20:42:32] Entered split_to_args() with string: "sudo reboot", delimiter: " "
+[2025-04-11 20:42:32] Duplicating input string
+[2025-04-11 20:42:32] Starting tokenization of string
+[2025-04-11 20:42:32] Processing token: "sudo"
+[2025-04-11 20:42:32] Token added to args array at position 0
+[2025-04-11 20:42:32] Processing token: "reboot"
+[2025-04-11 20:42:32] Token added to args array at position 1
+[2025-04-11 20:42:32] Tokenization complete, found 2 arguments
+[2025-04-11 20:42:32] Exiting split_to_args() with 2 arguments
+[2025-04-11 20:42:32] Comparing command names: "ls" vs "sudo"
+[2025-04-11 20:42:32] Entered free_args()
+[2025-04-11 20:42:32] Freeing argument at index 0
+[2025-04-11 20:42:32] Freeing argument at index 1
+[2025-04-11 20:42:32] Freed args array with 2 elements
+[2025-04-11 20:42:32] Exiting free_args()
+[2025-04-11 20:42:32] Comparing with dangerous command 2: "shutdown -h now"
+[2025-04-11 20:42:32] Entered split_to_args() with string: "shutdown -h now", delimiter: " "
+[2025-04-11 20:42:32] Duplicating input string
+[2025-04-11 20:42:32] Starting tokenization of string
+[2025-04-11 20:42:32] Processing token: "shutdown"
+[2025-04-11 20:42:32] Token added to args array at position 0
+[2025-04-11 20:42:32] Processing token: "-h"
+[2025-04-11 20:42:32] Token added to args array at position 1
+[2025-04-11 20:42:32] Processing token: "now"
+[2025-04-11 20:42:32] Token added to args array at position 2
+[2025-04-11 20:42:32] Tokenization complete, found 3 arguments
+[2025-04-11 20:42:32] Exiting split_to_args() with 3 arguments
+[2025-04-11 20:42:32] Comparing command names: "ls" vs "shutdown"
+[2025-04-11 20:42:32] Entered free_args()
+[2025-04-11 20:42:32] Freeing argument at index 0
+[2025-04-11 20:42:32] Freeing argument at index 1
+[2025-04-11 20:42:32] Freeing argument at index 2
+[2025-04-11 20:42:32] Freed args array with 3 elements
+[2025-04-11 20:42:32] Exiting free_args()
+[2025-04-11 20:42:32] Comparing with dangerous command 3: "mkfs.ext4 /dev/sda"
+[2025-04-11 20:42:32] Entered split_to_args() with string: "mkfs.ext4 /dev/sda", delimiter: " "
+[2025-04-11 20:42:32] Duplicating input string
+[2025-04-11 20:42:32] Starting tokenization of string
+[2025-04-11 20:42:32] Processing token: "mkfs.ext4"
+[2025-04-11 20:42:32] Token added to args array at position 0
+[2025-04-11 20:42:32] Processing token: "/dev/sda"
+[2025-04-11 20:42:32] Token added to args array at position 1
+[2025-04-11 20:42:32] Tokenization complete, found 2 arguments
+[2025-04-11 20:42:32] Exiting split_to_args() with 2 arguments
+[2025-04-11 20:42:32] Comparing command names: "ls" vs "mkfs.ext4"
+[2025-04-11 20:42:32] Entered free_args()
+[2025-04-11 20:42:32] Freeing argument at index 0
+[2025-04-11 20:42:32] Freeing argument at index 1
+[2025-04-11 20:42:32] Freed args array with 2 elements
+[2025-04-11 20:42:32] Exiting free_args()
+[2025-04-11 20:42:32] No dangerous command match found
+[2025-04-11 20:42:32] Exiting is_dangerous_command() with result: 0 (safe)
+[2025-04-11 20:42:32] Command passed danger check
+[2025-04-11 20:42:32] Creating child process to execute command
+[2025-04-11 20:42:32] Parent process waiting for child (PID: 3571) to complete
+[2025-04-11 20:42:32] Child process started with PID: 3571
+[2025-04-11 20:42:32] Executing command: ls
+[2025-04-11 20:42:32] Child process completed with status: 0
+[2025-04-11 20:42:32] Entered time_diff()
+[2025-04-11 20:42:32] Start time: 121.362075388
+[2025-04-11 20:42:32] End time: 121.374788187
+[2025-04-11 20:42:32] Calculated time difference: 0.01271 seconds
+[2025-04-11 20:42:32] Exiting time_diff() with result: 0.01271
+[2025-04-11 20:42:32] Command execution completed in 0.01271 seconds
+[2025-04-11 20:42:32] Entered free_args()
+[2025-04-11 20:42:32] Freeing argument at index 0
+[2025-04-11 20:42:32] Freeing argument at index 1
+[2025-04-11 20:42:32] Freed args array with 2 elements
+[2025-04-11 20:42:32] Exiting free_args()
+[2025-04-11 20:42:32] Arguments memory freed
+[2025-04-11 20:42:32] Waiting for user input
+[2025-04-11 20:42:32] Entered get_string()
+[2025-04-11 20:42:32] Allocating initial buffer of size 1024
+[2025-04-11 20:42:32] Reading input characters

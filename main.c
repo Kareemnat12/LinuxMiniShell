@@ -23,6 +23,7 @@ char** read_file_lines(const char* filename, int* num_lines);
 int is_dangerous_command(char **user_args, int user_args_len);
 double time_diff(struct timespec start, struct timespec end);
 
+
 /* Global variables */
 char **Danger_CMD;   // Dangerous commands from the file
 int args_len;        // Length of splitted string from the user input
@@ -35,7 +36,10 @@ struct timespec start, end;  // For time measurement
  */
 int main(int argc, char* argv[]) {
     // Read dangerous commands from file
-    Danger_CMD = read_file_lines("./f.txt", &numLines);
+   // Danger_CMD = read_file_lines(argv[1], &numLines);
+    const char *output_file = argv[2];// the output file log
+
+    Danger_CMD = read_file_lines("./f.txt", &numLines);// to debug pls delete it
 
     // Process user commands in an infinite loop
     while (1) {
