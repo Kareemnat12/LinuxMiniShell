@@ -22,6 +22,7 @@ int count_lines(const char* filename);
 char** read_file_lines(const char* filename, int* num_lines);
 int is_dangerous_command(char **user_args, int user_args_len);
 double time_diff(struct timespec start, struct timespec end);
+void append_to_log(const char *filename, char* val1, float val2);
 
 
 /* Global variables */
@@ -38,9 +39,12 @@ int main(int argc, char* argv[]) {
     // Read dangerous commands from file
    // Danger_CMD = read_file_lines(argv[1], &numLines);
     const char *output_file = argv[2];// the output file log
-
     Danger_CMD = read_file_lines("./f.txt", &numLines);// to debug pls delete it
-
+    {// to ovveride the output file wich for every new terminal run it starts empty
+        //this will be temp untill i write the done functoin
+        FILE *clear = fopen(argv[2], "w"); // Truncate the log file at start
+        if (clear) fclose(clear);
+    }
     // Process user commands in an infinite loop
     while (1) {
         printf("kareem@kareemTest~$ ");
@@ -105,6 +109,8 @@ int main(int argc, char* argv[]) {
         // Calculate and display execution time
         clock_gettime(CLOCK_MONOTONIC, &end);
         double total_time = time_diff(start, end);
+        append_to_log(output_file, userInput, total_time);
+
 
         free_args(args);
         printf("time taken: %.5f seconds\n", total_time);
@@ -369,4 +375,18 @@ double time_diff(struct timespec start, struct timespec end) {
 
     // Return total time in seconds with 5 digits after the decimal
     return total_time;
+}
+
+
+
+
+void append_to_log(const char *filename, char * val1, float val2) {
+    FILE *file = fopen(filename, "a");  // Append mode
+    if (!file) {
+        perror("Error opening log file");
+        return;
+    }
+
+    fprintf(file, "%s : %.5f sec\n", val1, val2);
+    fclose(file);
 }
