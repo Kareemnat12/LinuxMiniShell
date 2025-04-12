@@ -23,7 +23,9 @@ char** read_file_lines(const char* filename, int* num_lines);
 int is_dangerous_command(char **user_args, int user_args_len);
 double time_diff(struct timespec start, struct timespec end);
 void append_to_log(const char *filename, char* val1, float val2);
-void promt();
+void prompt();
+void update_min_max_time(double current_time, double *min_time, double *max_time);
+
 
 
 /* Global variables */
@@ -33,10 +35,21 @@ int numLines = 0;    // Number of lines in the dangerous commands file
 char **args;         // Arguments array
 struct timespec start, end;  // For time measurement
 
+/* Global variables for command statistics */
+int total_cmd_count = 0; // Total number of commands executed
+int dangerous_cmd_blocked_count = 0; // Number of dangerous commands blocked
+double last_cmd_time=0; // Time taken for the last successful command
+double average_time =0; // Average time taken for successful commands
+double total_time_all=0; //to help to  calculate the average time by getteing the sum of the times
+double min_time = -1;  // Must start negative so it gets overwritten
+double max_time = 0;
+
+
 /**
  * Main function - implements a simple shell
  */
 int main(int argc, char* argv[]) {
+
     // Read dangerous commands from file
    // Danger_CMD = read_file_lines(argv[1], &numLines);
     const char *output_file = argv[2];// the output file log
@@ -48,7 +61,7 @@ int main(int argc, char* argv[]) {
     }
     // Process user commands in an infinite loop
     while (1) {
-        promt();
+        prompt();
         char *userInput = get_string();
         clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -113,12 +126,17 @@ int main(int argc, char* argv[]) {
         }
         // Calculate and display execution time
         clock_gettime(CLOCK_MONOTONIC, &end);
-        double total_time = time_diff(start, end);
+        double total_time = time_diff(start, end); // total time for one successful command
         append_to_log(output_file, userInput, total_time);
+        total_cmd_count+=1;
+        last_cmd_time = total_time;
+        total_time_all += total_time;
+        average_time = total_time_all / total_cmd_count; // average time for all commands
+        update_min_max_time(total_time, &min_time, &max_time); // update min and max time
 
 
         free_args(args);
-        printf("time taken: %.5f seconds\n", total_time);
+        printf("time taken: %.5f seconds\n", total_time);// dint forget to remove this
     }
 }
 
@@ -343,6 +361,7 @@ int is_dangerous_command(char **user_args, int user_args_len) {
                 if (exact_match) {
                     // Exact match found
                     printf("ERR: Dangerous command detected (\"%s\"). Execution prevented.\n", user_args[0]);
+                    dangerous_cmd_blocked_count += 1;
                     free_args(dangerous_args);
                     return 1; // Block execution
                 }
@@ -396,7 +415,7 @@ void append_to_log(const char *filename, char * val1, float val2) {
     fclose(file);
 }
 
-void promt() {
+void prompt() {
     printf("#cmd:%d|#dangerous_cmd_blocked:%d|last_cmd_time:%.5f|avg_time:%.5f|min_time:%.5f|max_time:%.5f>>\n",
            total_cmd_count,
            dangerous_cmd_blocked_count,
@@ -404,4 +423,13 @@ void promt() {
            average_time,
            min_time,
            max_time);
+
+}
+
+void update_min_max_time(double current_time, double *min_time, double *max_time) {
+    if (*min_time < 0 || current_time < *min_time)
+        *min_time = current_time;
+
+    if (current_time > *max_time)
+        *max_time = current_time;
 }
