@@ -1,34 +1,17 @@
 
-Handling Empty Input and Leading Spaces:
-What should we do if the input is empty, or if the first or last character is a space?
-
-Handling Input Longer than 1024 Characters:
-Should we take action if the input exceeds 1024 characters? For instance, should we print an error message or handle the situation differently?
-
-Handling New Lines in Input:
-Can the input contain new lines (e.g., echo hi or multi-line input like im kareem)? How should we handle it?
-
-Counting NULL Elements in Command Arguments:
-When an argument array contains a NULL element (e.g., {"ls", "-l", NULL}), should it be counted as part of the length of the array? Is the length 2 or 3 in this case?
-
-Error Handling Behavior:
-When an error occurs (such as invalid input or command failure), should we terminate the program immediately, or should we allow the user to continue and try again with a new command?
-
-Dangerous Commands:
-Are dangerous commands limited to a predefined list, or could there be more commands we need to handle dynamically? How should we manage them?
 
 
-what will hppen if the argv file is empty????
 
-should we start the time measure immeditly after getting the user input ? and what about the wrong commands that is not able to compile or danger command ?
 
-*** dont forget to handle space when u deal with strcmp for instace with "done" when u want to finish the commands 
+**if the input  space or empty what should we do and if the first or the last char is space ?
+**what will hppen if the argv file is empty????
+**should we start the time measure immeditly after getting the user input ? and what about the wrong commands that is not able to compile or danger command ?
+** should we append in the log file the wrong or dangours commands or even if we write stuff is not command or commands that has errors like with more that 6 args ??
+** for every new run for the program we should create a new log file or append to the old one ?
+** dose wrong commands we need to calculate its time ?
 
 
 
 *** dont forget to change argv name from the main and file read function 
-and also dont forget to check if the time is efficient
-
-
-** dose wrong commands we need to calculate its time ?
-** i think we should take in account the argument check in the main 
+***and also dont forget to check if the time is efficient
+*** i think we should take in account the argument check in the main

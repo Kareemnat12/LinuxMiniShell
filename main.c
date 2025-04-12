@@ -23,6 +23,7 @@ char** read_file_lines(const char* filename, int* num_lines);
 int is_dangerous_command(char **user_args, int user_args_len);
 double time_diff(struct timespec start, struct timespec end);
 void append_to_log(const char *filename, char* val1, float val2);
+void promt();
 
 
 /* Global variables */
@@ -47,8 +48,7 @@ int main(int argc, char* argv[]) {
     }
     // Process user commands in an infinite loop
     while (1) {
-        printf("kareem@kareemTest~$ ");
-
+        promt();
         char *userInput = get_string();
         clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -98,14 +98,19 @@ int main(int argc, char* argv[]) {
             /* Child process */
             execvp(args[0], args);
             perror("execvp failed");
-            free_args(args);
-            return 1; // If execvp returns, an error occurred
+            exit(127); // Exit with error code 127 if execvp fails
+
         }
 
         // Parent process waits for child to complete
         int status;
         waitpid(pid, &status, 0);
-
+        if (WIFEXITED(status) && WEXITSTATUS(status) == 127) {
+            // Command execution failed, skip time measurement
+            printf("Command not found: %s\n", args[0]);
+            free_args(args);
+            continue;
+        }
         // Calculate and display execution time
         clock_gettime(CLOCK_MONOTONIC, &end);
         double total_time = time_diff(start, end);
@@ -389,4 +394,14 @@ void append_to_log(const char *filename, char * val1, float val2) {
 
     fprintf(file, "%s : %.5f sec\n", val1, val2);
     fclose(file);
+}
+
+void promt() {
+    printf("#cmd:%d|#dangerous_cmd_blocked:%d|last_cmd_time:%.5f|avg_time:%.5f|min_time:%.5f|max_time:%.5f>>\n",
+           total_cmd_count,
+           dangerous_cmd_blocked_count,
+           last_cmd_time,
+           average_time,
+           min_time,
+           max_time);
 }
