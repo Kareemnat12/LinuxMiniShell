@@ -50,7 +50,10 @@ double max_time = 0;
  * Main function - implements a simple shell
  */
 int main(int argc, char* argv[]) {
-
+//    if (argc < 3) {// to check that must be 2 files as argv
+//        fprintf(stderr, "Usage: %s <dangerous_commands_file> <log_file>\n", argv[0]);
+//        return 1;
+//    }
     // Read dangerous commands from file
    // const char *output_file = argv[2];// the output file log
     const char *output_file = "output.log";// the output file log
@@ -59,6 +62,11 @@ int main(int argc, char* argv[]) {
     const char *input_file = "f.txt";// the input file with the dangerous commands
 
     Danger_CMD = read_file_lines(input_file, &numLines);// to debug pls delete it
+    if (Danger_CMD == NULL) {
+        fprintf(stderr, "Failed to load dangerous commands\n");
+        exit(1);
+    }
+
     {// to ovveride the output file wich for every new terminal run it starts empty
         //this will be temp untill i write the done functoin
         FILE *clear = fopen(argv[2], "w"); // Truncate the log file at start
@@ -89,6 +97,8 @@ int main(int argc, char* argv[]) {
         // Handle too many arguments
         if (args == NULL) {
             free_args(args);
+            args = NULL;
+
             free(userInput);
             continue;
         }
@@ -98,6 +108,8 @@ int main(int argc, char* argv[]) {
             dangerous_cmd_blocked_count += 1;
             free(userInput);
             free_args(args);
+            args = NULL;
+
             continue; // Skip execution of dangerous command
         }
 
@@ -105,7 +117,9 @@ int main(int argc, char* argv[]) {
         if (strcmp(args[0], "done") == 0) {
             free(userInput);
             free_args(args);
+            args = NULL;
             free_args(Danger_CMD);
+            Danger_CMD= NULL;
             exit(0);
         }
 
@@ -116,6 +130,8 @@ int main(int argc, char* argv[]) {
             /* Error occurred */
             fprintf(stderr, "Fork Failed");
             free_args(args);
+            args = NULL;
+
             return 1;
         }
 
@@ -134,6 +150,7 @@ int main(int argc, char* argv[]) {
             // Command execution failed, skip time measurement
             printf("Command not found: %s\n", args[0]);
             free_args(args);
+            args = NULL;
             free(userInput) ;
             continue;
         }
@@ -149,6 +166,7 @@ int main(int argc, char* argv[]) {
 
         free(userInput);
         free_args(args);
+        args = NULL;
         printf("time taken: %.5f seconds\n", total_time);// dint forget to remove this
     }
 
@@ -219,6 +237,7 @@ char **split_to_args(const char *string, const char *delimiter, int *count) {
         if (!temp) {
             perror("Failed to reallocate memory");
             free_args(argf);
+            argf = NULL;
             free(input_copy);
             exit(1);
         }
@@ -229,6 +248,8 @@ char **split_to_args(const char *string, const char *delimiter, int *count) {
         if (!argf[*count]) {
             perror("Failed to allocate memory for token");
             free(input_copy);
+            free_args(argf);
+            argf = NULL;
             exit(1);
         }
 
@@ -237,7 +258,9 @@ char **split_to_args(const char *string, const char *delimiter, int *count) {
     }
 
     // Null-terminate like a proper argv
-    argf[*count] = NULL;
+    if(argf != NULL) {
+        argf[*count] = NULL;
+    }
 
     // Handle maximum number of arguments error
     if (*count - 1 > MAX_ARGC) {
@@ -280,17 +303,39 @@ int checkMultipleSpaces(const char* str) {
 /**
  * Free memory allocated for arguments array
  */
+//void free_args(char **args) {
+//    if (args == NULL) {
+//        return;
+//    }
+//
+//    for (int i = 0; args[i] != NULL; i++) {
+//        free(args[i]);
+//    }
+//
+//    free(args);
+//}
+//void free_args(char **args) {
+//    if (args != NULL) {  // Ensure the pointer is not NULL
+//        // Loop through the array and free each string
+//        for (int i = 0; args[i] != NULL; i++) {
+//            free(args[i]);    // Free each string in the array
+//            args[i] = NULL;    // Set to NULL to prevent accidental access
+//        }
+//        free(args);           // Free the array itself
+//        args = NULL;          // Set the pointer to NULL to avoid further access
+//    }
+//}
 void free_args(char **args) {
-    if (args == NULL) {
-        return;
+    if (args != NULL) {  // Ensure the pointer is not NULL
+        for (int i = 0; args[i] != NULL; i++) { // Ensure args[i] is not accessed out of bounds
+            free(args[i]);    // Free each string in the array
+            args[i] = NULL;    // Set to NULL to prevent accidental access
+        }
+        free(args);           // Free the array itself
+        args = NULL;          // Set the pointer to NULL to avoid further access
     }
-
-    for (int i = 0; args[i] != NULL; i++) {
-        free(args[i]);
-    }
-
-    free(args);
 }
+
 
 /**
  * Count lines in a file
@@ -316,7 +361,7 @@ int count_lines(const char* filename) {
 /**
  * Read lines from a file into a string array
  */
-char** read_file_lines(const char* filename, int* num_lines) {
+/*char** read_file_lines(const char* filename, int* num_lines) {
     *num_lines = count_lines(filename);
     if (*num_lines <= 0) {
         return NULL;
@@ -346,8 +391,39 @@ char** read_file_lines(const char* filename, int* num_lines) {
 
     fclose(file);
     return lines;
-}
+}*/
+char** read_file_lines(const char* filename, int* num_lines) {
+    *num_lines = count_lines(filename);
+    if (*num_lines <= 0) {
+        return NULL;
+    }
 
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        perror("Error opening file for reading");
+        return NULL;
+    }
+
+    char** lines = malloc((*num_lines + 1) * sizeof(char*)); // Allocate one extra for NULL terminator
+    if (!lines) {
+        perror("Memory allocation failed");
+        fclose(file);
+        return NULL;
+    }
+
+    char buffer[MAX_INPUT_LENGTH];
+    int i = 0;
+
+    while (fgets(buffer, sizeof(buffer), file) && i < *num_lines) {
+        buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline
+        lines[i] = strdup(buffer); // Store line
+        i++;
+    }
+
+    lines[i] = NULL; // Null-terminate the array
+    fclose(file);
+    return lines;
+}
 /**
  * Check if command is in the list of dangerous commands
  * Returns 1 if dangerous, 0 otherwise
