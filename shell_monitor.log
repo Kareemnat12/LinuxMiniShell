@@ -1,4 +1,4 @@
-[2025-04-10 23:50:25] Shell starting up - PID: 19639, User: Kareemnat12
+2025-04-10 23:50:25] Shell starting up - PID: 19639, User: Kareemnat12
 [2025-04-10 23:50:25] Initializing shell environment
 [2025-04-10 23:50:25] Loading dangerous commands file: ./f.txt
 [2025-04-10 23:50:25] Entered read_file_lines() for file: ./f.txt

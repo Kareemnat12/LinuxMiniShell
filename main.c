@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <bits/time.h>
 #include <sys/wait.h>
+
 #include <errno.h>
 
 /* Constants */
@@ -51,9 +52,13 @@ double max_time = 0;
 int main(int argc, char* argv[]) {
 
     // Read dangerous commands from file
-   // Danger_CMD = read_file_lines(argv[1], &numLines);
-    const char *output_file = argv[2];// the output file log
-    Danger_CMD = read_file_lines("./f.txt", &numLines);// to debug pls delete it
+   // const char *output_file = argv[2];// the output file log
+    const char *output_file = "output.log";// the output file log
+
+    //const char *input_file = argv[1];// the input file with the dangerous commands
+    const char *input_file = "f.txt";// the input file with the dangerous commands
+
+    Danger_CMD = read_file_lines(input_file, &numLines);// to debug pls delete it
     {// to ovveride the output file wich for every new terminal run it starts empty
         //this will be temp untill i write the done functoin
         FILE *clear = fopen(argv[2], "w"); // Truncate the log file at start
@@ -67,7 +72,7 @@ int main(int argc, char* argv[]) {
 
         // Handle input exceeding maximum length
         if (userInput == NULL) {
-            free(userInput);
+           // free(userInput);
             continue;
         }
 
@@ -84,16 +89,23 @@ int main(int argc, char* argv[]) {
         // Handle too many arguments
         if (args == NULL) {
             free_args(args);
+            free(userInput);
             continue;
         }
 
         // Check for dangerous commands
         if (is_dangerous_command(args, args_len)) {
+            dangerous_cmd_blocked_count += 1;
+            free(userInput);
+            free_args(args);
             continue; // Skip execution of dangerous command
         }
 
         // Check for exit command
         if (strcmp(args[0], "done") == 0) {
+            free(userInput);
+            free_args(args);
+            free_args(Danger_CMD);
             exit(0);
         }
 
@@ -122,6 +134,7 @@ int main(int argc, char* argv[]) {
             // Command execution failed, skip time measurement
             printf("Command not found: %s\n", args[0]);
             free_args(args);
+            free(userInput) ;
             continue;
         }
         // Calculate and display execution time
@@ -134,10 +147,11 @@ int main(int argc, char* argv[]) {
         average_time = total_time_all / total_cmd_count; // average time for all commands
         update_min_max_time(total_time, &min_time, &max_time); // update min and max time
 
-
+        free(userInput);
         free_args(args);
         printf("time taken: %.5f seconds\n", total_time);// dint forget to remove this
     }
+
 }
 
 /**
@@ -204,6 +218,7 @@ char **split_to_args(const char *string, const char *delimiter, int *count) {
         char **temp = realloc(argf, (*count + 2) * sizeof(char *));
         if (!temp) {
             perror("Failed to reallocate memory");
+            free_args(argf);
             free(input_copy);
             exit(1);
         }
@@ -361,7 +376,6 @@ int is_dangerous_command(char **user_args, int user_args_len) {
                 if (exact_match) {
                     // Exact match found
                     printf("ERR: Dangerous command detected (\"%s\"). Execution prevented.\n", user_args[0]);
-                    dangerous_cmd_blocked_count += 1;
                     free_args(dangerous_args);
                     return 1; // Block execution
                 }
@@ -433,3 +447,7 @@ void update_min_max_time(double current_time, double *min_time, double *max_time
     if (current_time > *max_time)
         *max_time = current_time;
 }
+
+
+
+

@@ -1,0 +1,5 @@
+echo hi  : 0.00160 sec
+echo hello  : 0.00215 sec
+echo shalom : 0.00169 sec
+ls -l : 0.00278 sec
+ls -a  : 0.00287 sec
