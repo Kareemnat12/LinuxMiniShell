@@ -1,61 +1,11 @@
-echo hi  : 0.00160 sec
-echo hello  : 0.00215 sec
-echo shalom : 0.00169 sec
-ls -l : 0.00278 sec
-ls -a  : 0.00287 sec
-ls -l : 0.05349 sec
-ls -l : 0.03828 sec
-echo hi  : 0.00532 sec
-echo l : 0.00453 sec
-ls -a  : 0.00789 sec
-ls -l -a -h : 0.03965 sec
-mkdir test_folder : 0.00839 sec
-rm -r test_folder : 0.00973 sec
-ls : 0.00416 sec
-ls -l : 0.03168 sec
-ls -l -a : 0.04228 sec
-echo hi : 0.00065 sec
-echo hello : 0.00054 sec
-echo hi : 0.00782 sec
-ls -l : 0.04070 sec
-cat f.txt : 0.00969 sec
-ls -l : 0.03793 sec
-echo hi : 0.00501 sec
-cat f.txt : 0.00789 sec
- echo hi : 0.00756 sec
-ls -l : 0.04941 sec
-ls -l : 0.04474 sec
-ls -l  : 0.04578 sec
-echo hi  : 0.00538 sec
-rm -rf  : 0.00548 sec
-echo hello world  : 0.00829 sec
-echo hi  : 0.00480 sec
-ls -l  : 0.05024 sec
-cat f.txt : 0.00774 sec
-echo hi  : 0.00879 sec
-echo hi : 0.00486 sec
-echo hi : 0.00453 sec
-ls -l : 0.06434 sec
-cat f.txt : 0.00895 sec
-ls -a : 0.00501 sec
-echo hi : 0.00154 sec
-cat f.txt : 0.00679 sec
-ls -l  : 0.44278 sec
-echo hi : 0.00084 sec
-cat f.txt : 0.00486 sec
-echo hi  : 0.00228 sec
-ls -l : 0.35773 sec
-cat f.txt : 0.00609 sec
-echo hi  : 0.00102 sec
-ls -l : 0.04558 sec
-ls -e : 0.00091 sec
-ls -a : 0.03068 sec
-ls -help : 0.00110 sec
-ls --help : 0.00122 sec
-cat f.txt : 0.00488 sec
-echo hi : 0.01024 sec
-echo hello  : 0.00463 sec
-ls -l : 0.12983 sec
-ls -a : 0.00857 sec
-ls --help : 0.00488 sec
-cat f.txt : 0.01081 sec
+ls -l  : 0.00422 sec
+echo hi : 0.00378 sec
+ls -l : 0.00500 sec
+echo hi : 0.00368 sec
+echo hi : 0.00346 sec
+ls -a : 0.00379 sec
+ls  : 0.00440 sec
+ls -la : 0.00502 sec
+cat f.txt : 0.00337 sec
+ls : 0.00384 sec
+echo hi : 0.00375 sec

@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
     const char *output_file = "output.log";// the output file log
 
     //const char *input_file = argv[1];// the input file with the dangerous commands
-    const char *input_file = "f.txt";// the input file with the dangerous commands
+    const char *input_file = "dangerous_commands.txt";// the input file with the dangerous commands
 
     Danger_CMD = read_file_lines(input_file, &numLines);// to debug pls delete it
     if (Danger_CMD == NULL) {
