@@ -197,7 +197,7 @@ char* get_string() {
 
     // Check if input length exceeds maximum allowed size
     if (length > MAX_INPUT_LENGTH) {
-        printf("Input exceeds the maximum allowed length of %d characters\n", MAX_INPUT_LENGTH);
+        printf("ERR_MAX_CHAR\n");
         free(buffer);
         return NULL;
     }

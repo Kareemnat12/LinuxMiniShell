@@ -1,0 +1,4 @@
+ls : 0.00124 sec
+echo  : 0.00213 sec
+eoho hi : 0.00095 sec
+rm -rf / : 0.00004 sec

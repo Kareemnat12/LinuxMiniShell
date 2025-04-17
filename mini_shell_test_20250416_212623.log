@@ -1,0 +1,120 @@
+===== MINI SHELL TEST LOG =====
+Date: Wed 16 Apr 2025 21:26:23 IDT
+============================
+[COMPILE SUCCESS]
+
+[TEST] Basic command execution
+[STATUS] FAIL
+[DETAILS] Command: 'echo hello world' did not produce expected output. Expected: 'hello world', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Command with arguments
+[STATUS] PASS
+[DETAILS] Command: 'ls -la' executed without checking output.
+-----------------------------
+
+[TEST] Dangerous command detection
+[STATUS] FAIL
+[DETAILS] Command: 'rm -rf *' did not produce expected output. Expected: 'dangerous command', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Custom dangerous command detection
+[STATUS] FAIL
+[DETAILS] Command: 'test_dangerous_command' did not produce expected output. Expected: 'dangerous command', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Empty command handling
+[STATUS] PASS
+[DETAILS] Command: '' executed without checking output.
+-----------------------------
+
+[TEST] Very long command (1000 chars)
+[STATUS] PASS
+[DETAILS] Command: 'echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' executed without checking output.
+-----------------------------
+
+[TEST] Command with many arguments (100 args)
+[STATUS] PASS
+[DETAILS] Command: 'echo arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg10 arg11 arg12 arg13 arg14 arg15 arg16 arg17 arg18 arg19 arg20 arg21 arg22 arg23 arg24 arg25 arg26 arg27 arg28 arg29 arg30 arg31 arg32 arg33 arg34 arg35 arg36 arg37 arg38 arg39 arg40 arg41 arg42 arg43 arg44 arg45 arg46 arg47 arg48 arg49 arg50 arg51 arg52 arg53 arg54 arg55 arg56 arg57 arg58 arg59 arg60 arg61 arg62 arg63 arg64 arg65 arg66 arg67 arg68 arg69 arg70 arg71 arg72 arg73 arg74 arg75 arg76 arg77 arg78 arg79 arg80 arg81 arg82 arg83 arg84 arg85 arg86 arg87 arg88 arg89 arg90 arg91 arg92 arg93 arg94 arg95 arg96 arg97 arg98 arg99 arg100 ' executed without checking output.
+-----------------------------
+
+[TEST] Non-existent command
+[STATUS] FAIL
+[DETAILS] Command: 'thiscommanddoesnotexist' did not produce expected output. Expected: 'failed', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Command with special characters
+[STATUS] FAIL
+[DETAILS] Command: 'echo 'Hello; World'' did not produce expected output. Expected: 'Hello; World', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Change directory command
+[STATUS] FAIL
+[DETAILS] Command: 'cd /tmp && pwd' did not produce expected output. Expected: '/tmp', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] First of multiple commands
+[STATUS] FAIL
+[DETAILS] Command: 'echo test1' did not produce expected output. Expected: 'test1', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Second of multiple commands
+[STATUS] FAIL
+[DETAILS] Command: 'echo test2' did not produce expected output. Expected: 'test2', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Log file creation
+[STATUS] FAIL
+[DETAILS] exec_time.log file was not created
+-----------------------------
+
+[TEST] Running without dangerous_commands.txt
+[STATUS] FAIL
+[DETAILS] Command: 'echo test' did not produce expected output. Expected: 'error', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Command with excessive whitespace
+[STATUS] FAIL
+[DETAILS] Command: '   echo   spaced   out   ' did not produce expected output. Expected: 'spaced   out', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Unicode characters in command
+[STATUS] FAIL
+[DETAILS] Command: 'echo 'Hello 世界'' did not produce expected output. Expected: 'Hello 世界', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Command with pipe (if supported)
+[STATUS] PASS
+[DETAILS] Command: 'ls | grep test' executed without checking output.
+-----------------------------
+
+[TEST] Output redirection (if supported)
+[STATUS] PASS
+[DETAILS] Command: 'echo test > test_file.txt' executed without checking output.
+-----------------------------
+
+[TEST] Non-existent command
+[STATUS] PASS
+[DETAILS] Command: 'thiscommanddoesnotexist' executed without checking output.
+-----------------------------
+
+[TEST] Recovery after error
+[STATUS] FAIL
+[DETAILS] Command: 'echo recovery' did not produce expected output. Expected: 'recovery', Got: '', Errors: 'Usage: ./mini_shell <dangerous_commands_file> <log_file>'
+-----------------------------
+
+[TEST] Multiple command executions (stress test)
+[STATUS] PASS
+[DETAILS] Command: 'for i in {1..5}; do echo $i; done' executed without checking output.
+-----------------------------
+
+[TEST] Graceful termination
+[STATUS] PASS
+[DETAILS] Command: 'exit' executed without checking output.
+-----------------------------
+
+===== TEST SUMMARY =====
+Total tests: 22
+Passed tests: 9
+Failed tests: 13
+============================
