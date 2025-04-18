@@ -40,7 +40,6 @@ double total_time_all = 0;             // To help calculate the average time by 
 double min_time = -1;                  // Must start negative so it gets overwritten
 double max_time = 0;                   // Maximum time for command execution
 int semi_dangerous_cmd_count = 0;      // Number of similar commands detected
-
 /**
  * Main function - implements a simple shell
  */
@@ -110,8 +109,9 @@ int main(int argc, char* argv[]) {
             args = NULL;
             free_args(Danger_CMD);
             Danger_CMD = NULL;
-            printf("blocked command: %d\nunblocked commands: %d\n",
-                   dangerous_cmd_blocked_count, semi_dangerous_cmd_count);
+            /*printf("blocked command: %d\nunblocked commands: %d\n",
+                   dangerous_cmd_blocked_count, semi_dangerous_cmd_count);*/
+            printf("%d",dangerous_cmd_blocked_count+semi_dangerous_cmd_count);
             exit(0);
         }
 
@@ -120,7 +120,7 @@ int main(int argc, char* argv[]) {
 
         if (pid < 0) {
             /* Error occurred */
-            fprintf(stderr, "Fork Failed");
+            perror("Fork Failed");
             free_args(args);
             args = NULL;
             return 1;
@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
         waitpid(pid, &status, 0);
         if (WIFEXITED(status) && WEXITSTATUS(status) == 127) {
             // Command execution failed, skip time measurement
-            printf("Command not found: %s\n", args[0]);
+            printf("ERR_CMD: %s\n", args[0]);
             free_args(args);
             args = NULL;
             free(userInput);
@@ -283,7 +283,7 @@ int checkMultipleSpaces(const char* input) {
         if (input[i] == ' ') {
             if (prevWasSpace && !onlySpaces) {
                 // Found multiple consecutive spaces between actual args
-                printf("ERR_space\n");
+                printf("ERR_SPACE\n");
                 return 1;
             }
             prevWasSpace = 1;
@@ -294,7 +294,7 @@ int checkMultipleSpaces(const char* input) {
         i++;
     }
 
-    return 0; // It's fine, let it through
+    return 0;
 }
 
 
@@ -384,7 +384,7 @@ char** read_file_lines(const char* filename, int* num_lines) {
     fclose(file);
     *num_lines = count;
 
-    // Optional: Resize array to exact size to save memory
+    // Resize array to exact size to save memory :)
     if (count > 0 && count < capacity - 1) {  // Account for NULL terminator
         char** new_lines = realloc(lines, (count + 1) * sizeof(char*));  // +1 for NULL
         // If realloc fails, we can still use the original array
@@ -401,6 +401,7 @@ char** read_file_lines(const char* filename, int* num_lines) {
  * Returns 1 if dangerous, 0 otherwise
  */
 int is_dangerous_command(char **user_args, int user_args_len) {
+
     for (int i = 0; i < numLines; i++) {
         int temp_count;
         char **dangerous_args = split_to_args(Danger_CMD[i], delim, &temp_count);
@@ -423,7 +424,7 @@ int is_dangerous_command(char **user_args, int user_args_len) {
 
                 if (exact_match) {
                     // Exact match found
-                    printf("ERR: Dangerous command detected (\"%s\"). Execution prevented.\n", user_args[0]);
+                    printf("ERR: Dangerous command detected (\"%s\"). Execution prevented.\n",Danger_CMD[i]);
                     dangerous_cmd_blocked_count += 1;
                     free_args(dangerous_args);
                     return 1;  // Block execution
@@ -431,7 +432,7 @@ int is_dangerous_command(char **user_args, int user_args_len) {
             }
 
             // Similar command found (same name but different arguments)
-            printf("WARNING: Command similar to dangerous command (\"%s\"). Proceed with caution.\n", dangerous_args[0]);
+            printf("WARNING: Command similar to dangerous command (\"%s\"). Proceed with caution.\n", Danger_CMD[i]);
             semi_dangerous_cmd_count += 1;
             free_args(dangerous_args);
             return 0;  // Allow execution with warning
