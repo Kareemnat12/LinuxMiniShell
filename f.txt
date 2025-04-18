@@ -1,4 +1,4 @@
-hello this is the first line 
-this is the second line 
-this is the therd line 
-this is the forth line without space 
+rm -rf /
+sudo reboot
+shutdown -h now
+mkfs.ext4 /dev/sda
