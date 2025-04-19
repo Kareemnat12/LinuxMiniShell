@@ -1,0 +1,4 @@
+echo hi : 0.00194 sec
+echo hello : 0.00233 sec
+echo eecho : 0.00197 sec
+echo hello : 0.00253 sec

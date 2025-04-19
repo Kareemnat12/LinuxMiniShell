@@ -38,7 +38,7 @@ int dangerous_cmd_blocked_count = 0;   // Number of dangerous commands blocked
 double last_cmd_time = 0;              // Time taken for the last successful command
 double average_time = 0;               // Average time taken for successful commands
 double total_time_all = 0;             // To help calculate the average time by getting the sum of the times
-double min_time = -1;                  // Must start negative so it gets overwritten
+double min_time = 0;                  // Must start negative so it gets overwritten
 double max_time = 0;                   // Maximum time for command execution
 int semi_dangerous_cmd_count = 0;      // Number of similar commands detected
 /**
@@ -71,7 +71,6 @@ int main(int argc, char* argv[]) {
         prompt();
         char *userInput = get_string();
         clock_gettime(CLOCK_MONOTONIC, &start);
-        char *trimmed_input = NULL;
         // Handle input exceeding maximum length
         if (userInput == NULL) {
             continue;
@@ -140,7 +139,6 @@ int main(int argc, char* argv[]) {
         waitpid(pid, &status, 0);
         if (WIFEXITED(status) && WEXITSTATUS(status) == 127) {
             // Command execution failed, skip time measurement
-            printf("ERR_CMD: %s\n", args[0]);
             free_args(args);
             args = NULL;
             free(userInput);
@@ -501,7 +499,7 @@ void prompt() {
  * Update minimum and maximum execution times
  */
 void update_min_max_time(double current_time, double *min_time, double *max_time) {
-    if (*min_time < 0 || current_time < *min_time) {
+    if (*min_time <= 0 || current_time < *min_time) {
         *min_time = current_time;
     }
 
