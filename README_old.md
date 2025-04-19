@@ -113,3 +113,4 @@ gcc -Wall -o ex1 ex1.c
 - The log file is cleared at the start of each shell execution
 - Initial minimum time is set to -1 to ensure it gets updated on the first command execution
 - The programme won't run if argv files are not provided, will see error ```"Usage: %s <dangerous_commands_file> <log_file>"```
+

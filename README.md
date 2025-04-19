@@ -1,0 +1,114 @@
+# Mini Shell Implementation
+
+## Overview
+This project implements a simple shell (command-line interface) in C under Linux. The shell reads user commands, executes them using system calls, and provides additional features including command timing, dangerous command detection, and detailed statistics tracking.
+
+## Features
+
+### 1. Basic Command Execution
+- Reads and executes system commands using `fork()` and `execvp()`
+- Supports command input of up to 1024 characters
+- Handles up to 6 command-line arguments
+- Terminates on the `done` command with statistics output
+- Provides error handling for failed commands with `ERR_CMD` message
+
+### 2. Informative Prompt
+The shell displays a detailed prompt with the following information:
+```
+#cmd:<count>|#dangerous_cmd_blocked:<count>|last_cmd_time:<time>|avg_time:<time>|min_time:<time>|max_time:<time>>
+```
+Where:
+- `#cmd` - Number of successfully executed commands
+- `#dangerous_cmd_blocked` - Number of dangerous commands that were blocked
+- `last_cmd_time` - Execution time of the last successful command (in seconds)
+- `avg_time` - Average execution time of all successful commands
+- `min_time` - Minimum command execution time observed
+- `max_time` - Maximum command execution time observed
+
+### 3. Command Timing
+- Measures execution time for each command using `clock_gettime(CLOCK_MONOTONIC)`
+- Logs detailed timing data to a specified output file in format: `<command> : <time> sec`
+- Uses a high-precision timer with results in 5 decimal places
+
+### 4. Dangerous Commands Protection
+- Reads potential dangerous commands from a specified input file
+- Blocks execution of exact matches to dangerous commands with message: `ERR: Dangerous command detected ("<command>"). Execution prevented.`
+- Warns about similar commands (same command name but different arguments) with: `WARNING: Command similar to dangerous command ("<command>"). Proceed with caution.`
+- Tracks statistics on blocked and similar commands
+
+## Usage
+
+```
+./ex1 <dangerous_commands_file> <log_file>
+```
+
+### Parameters:
+- `dangerous_commands_file`: Text file containing dangerous commands (one per line)
+- `log_file`: File where command execution times will be logged
+
+### Example:
+```
+./ex1 dangerous_commands.txt exec_times.log
+```
+
+## Input Validation
+- Maximum command length: 1024 characters (defined by `MAX_INPUT_LENGTH`)
+- Maximum number of arguments: 6 (defined by `MAX_ARGC`)
+- Multiple consecutive spaces between arguments are not allowed
+- Empty inputs and input containing only spaces are handled properly
+
+## Error Messages
+- `ERR_ARGS`: Displayed when more than 6 arguments are provided
+- `ERR_SPACE`: Displayed when multiple spaces are found between arguments
+- `ERR_MAX_CHAR`: Displayed when input exceeds maximum length
+- `ERR_CMD`: Displayed when a command cannot be executed
+- `ERR: Dangerous command detected ("<command>")`: Displayed when a dangerous command is blocked
+
+## Dangerous Commands Format
+The dangerous commands file should contain one command per line, with the exact command and arguments. For example:
+```
+rm -rf /
+sudo reboot
+shutdown -h now
+mkfs.ext4 /dev/sda
+```
+
+## Execution Time Log Format
+Each executed command is logged with its execution time in the specified log file:
+```
+ls -l : 0.00234 sec
+sleep 5 : 5.00012 sec
+grep "pattern" file.txt : 0.12345 sec
+```
+
+## Exiting the Shell
+Type `done` to exit the shell. Upon exit, the shell will display the total number of dangerous and semi-dangerous commands encountered.
+
+## Implementation Details
+
+### Key Functions
+- `get_string()`: Reads user input with dynamic memory allocation
+- `split_to_args()`: Splits command string into argument array
+- `checkMultipleSpaces()`: Validates spacing between arguments
+- `read_file_lines()`: Reads dangerous commands from file
+- `is_dangerous_command()`: Checks if a command is dangerous
+- `time_diff()`: Calculates execution time difference
+- `prompt()`: Displays the detailed shell prompt
+- `append_to_log()`: Records command execution time to log file
+- `update_min_max_time()`: Updates minimum and maximum execution times
+
+### Memory Management
+- Dynamic memory allocation for input and command arguments
+- Proper cleanup using `free_args()` to prevent memory leaks
+- Error handling for memory allocation failures
+
+## Compilation
+```
+gcc -Wall -o ex1 ex1.c
+```
+
+## Notes
+- The shell clears the log file at the start of each execution
+- Initial minimum time is set to -1 to ensure it gets properly updated on first command
+- Both dangerous and semi-dangerous commands are tracked separately
+- The program uses fork() and waitpid() to ensure proper process management
