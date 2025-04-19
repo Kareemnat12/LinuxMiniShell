@@ -1,4 +1,0 @@
-rm -rf ' : 0.00217 sec
-sudo : 0.00624 sec
-shutdown : 0.01947 sec
-echo hi : 0.00207 sec

@@ -23,6 +23,7 @@ float time_diff(struct timespec start, struct timespec end);
 void append_to_log(const char *filename, char* val1, float val2);
 void prompt();
 void update_min_max_time(double current_time, double *min_time, double *max_time);
+char* trim_inplace(char* str);
 
 /* Global variables */
 char **Danger_CMD;              // Dangerous commands from the file
@@ -70,12 +71,13 @@ int main(int argc, char* argv[]) {
         prompt();
         char *userInput = get_string();
         clock_gettime(CLOCK_MONOTONIC, &start);
-
+        char *trimmed_input = NULL;
         // Handle input exceeding maximum length
         if (userInput == NULL) {
             continue;
         }
-
+        // Trim the input string in-place (no new allocation)
+        trim_inplace(userInput);
         // Check for multiple spaces in input
         int spaceCheck = checkMultipleSpaces(userInput);
         if (spaceCheck == 1) {
@@ -111,7 +113,7 @@ int main(int argc, char* argv[]) {
             Danger_CMD = NULL;
             /*printf("blocked command: %d\nunblocked commands: %d\n",
                    dangerous_cmd_blocked_count, semi_dangerous_cmd_count);*/
-            printf("%d",dangerous_cmd_blocked_count+semi_dangerous_cmd_count);
+            printf("%d\n",dangerous_cmd_blocked_count+semi_dangerous_cmd_count);
             exit(0);
         }
 
@@ -484,13 +486,15 @@ void append_to_log(const char *filename, char *val1, float val2) {
  * Display the shell prompt with statistics
  */
 void prompt() {
-    printf("#cmd:%d|#dangerous_cmd_blocked:%d|last_cmd_time:%.5f|avg_time:%.5f|min_time:%.5f|max_time:%.5f>>\n",
+    printf("#cmd:%d|#dangerous_cmd_blocked:%d|last_cmd_time:%.5f|avg_time:%.5f|min_time:%.5f|max_time:%.5f>>",
            total_cmd_count,
            dangerous_cmd_blocked_count,
            last_cmd_time,
            average_time,
            min_time,
            max_time);
+    fflush(stdout);
+
 }
 
 /**
@@ -504,4 +508,52 @@ void update_min_max_time(double current_time, double *min_time, double *max_time
     if (current_time > *max_time) {
         *max_time = current_time;
     }
+}
+
+
+
+/**
+ * Trims leading and trailing whitespace from a string in-place
+ *
+ * @param str The string to trim (will be modified)
+ * @return Pointer to the same string memory that was passed in
+ */
+char* trim_inplace(char* str) {
+    if (str == NULL) {
+        return NULL;
+    }
+
+    // Empty string case
+    if (*str == '\0') {
+        return str;
+    }
+
+    // Find the first non-whitespace character
+    char* start = str;
+    while (*start && (*start == ' ' || *start == '\t')) {
+        start++;
+    }
+
+    // If the string is all whitespace, make it empty
+    if (*start == '\0') {
+        *str = '\0';
+        return str;
+    }
+
+    // Find the last non-whitespace character
+    char* end = str + strlen(str) - 1;
+    while (end > start && (*end == ' ' || *end == '\t')) {
+        end--;
+    }
+
+    // Null-terminate after the last non-whitespace character
+    end[1] = '\0';
+
+    // If there was leading whitespace, shift the content left
+    if (start != str) {
+        size_t len = (end - start) + 1;
+        memmove(str, start, len + 1); // +1 for null terminator
+    }
+
+    return str;
 }
