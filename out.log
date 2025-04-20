@@ -1,0 +1,26 @@
+tldr man : 0.01164 sec
+tldr echo : 0.01298 sec
+tldr man : 0.01394 sec
+man command : 0.03174 sec
+echo > hi : 0.00180 sec
+echo hi > fil.txt : 0.00179 sec
+echo hi >txt.txt : 0.00165 sec
+echo : 0.00157 sec
+mkdir test : 0.00160 sec
+rm --help : 0.00268 sec
+rm -f ./test : 0.00218 sec
+ls -l ./test : 0.00233 sec
+ls -l : 0.00304 sec
+rm -rf /test : 0.00222 sec
+ls : 0.00218 sec
+cp : 0.00299 sec
+cp : 0.00316 sec
+cp --help : 0.00368 sec
+cp : 0.00288 sec
+echo hello\word : 0.00206 sec
+echo "hellow world" : 0.00196 sec
+echo `ls` : 0.00222 sec
+ls | : 0.00241 sec
+echo Hello\ World : 0.00169 sec
+sleep 10 & sleep 20 & : 0.00441 sec
+sleep 10 & sleep 20 : 0.00192 sec
