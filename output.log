@@ -1,6 +1,1 @@
-ls -l : 0.02270 sec
-echo hi : 0.02496 sec
-cat f.txt : 0.02226 sec
-cat f.txt : 0.00193 sec
-cat f.txt : 29.51090 sec
-cat out.log : 4.59499 sec
+echo hi : 0.00059 sec

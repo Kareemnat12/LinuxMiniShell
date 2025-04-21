@@ -2,3 +2,6 @@ rm -rf /
 sudo reboot
 shutdown -h now
 mkfs.ext4 /dev/sda
+rm -help
+mkfs.ext4 /degdfgfdgdfv/sdagdfgdfgdfgfd
+shit nig
