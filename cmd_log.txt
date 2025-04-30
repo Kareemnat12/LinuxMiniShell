@@ -1,0 +1,2 @@
+rm -rf folder1 : 0.00155 sec
+echo "Still running..." : 0.00170 sec

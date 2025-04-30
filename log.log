@@ -1,0 +1,3 @@
+ls -l : 0.00341 sec
+cat f.txt : 0.00231 sec
+ls -- : 0.00265 sec

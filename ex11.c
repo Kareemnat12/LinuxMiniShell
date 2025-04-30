@@ -35,7 +35,7 @@ void prompt();
 char **Danger_CMD;              // List of dangerous commands loaded from file
 int args_len;                   // Number of arguments in current command
 int numLines = 0;               // Number of dangerous commands in the file
-char **args;                    // Current command arguments array
+char **args1;                    // Current command arguments array
 struct timespec start, end;     // Timestamps for timing command execution
 
 // Statistics tracking
@@ -102,29 +102,29 @@ int main(int argc, char* argv[]) {
         }
 
         // Split the input into command and arguments
-        args = split_to_args(userInput, delim, &args_len);
+        args1 = split_to_args(userInput, delim, &args_len);
 
         // Skip if too many arguments
-        if (args == NULL) {
-            free_args(args);
-            args = NULL;
+        if (args1 == NULL) {
+            free_args(args1);
+            args1 = NULL;
             free(userInput);
             continue;
         }
 
         // Check if this is a dangerous command we should block
-        if (is_dangerous_command(args, args_len)) {
+        if (is_dangerous_command(args1, args_len)) {
             free(userInput);
-            free_args(args);
-            args = NULL;
+            free_args(args1);
+            args1 = NULL;
             continue;  // Skip execution of dangerous command
         }
 
         // Handle the exit command
-        if (strcmp(args[0], "done") == 0) {
+        if (strcmp(args1[0], "done") == 0) {
             free(userInput);
-            free_args(args);
-            args = NULL;
+            free_args(args1);
+            args1 = NULL;
             free_args(Danger_CMD);
             Danger_CMD = NULL;
             printf("%d\n", dangerous_cmd_blocked_count + semi_dangerous_cmd_count);
@@ -137,14 +137,14 @@ int main(int argc, char* argv[]) {
         if (pid < 0) {
             // Fork failed
             perror("Fork Failed");
-            free_args(args);
-            args = NULL;
+            free_args(args1);
+            args1 = NULL;
             return 1;
         }
 
         if (pid == 0) {
             // Child process - execute the command
-            execvp(args[0], args);
+            execvp(args1[0], args1);
             perror("execvp failed");
             exit(127);  // Exit with error code 127 if execvp fails
         }
@@ -167,13 +167,13 @@ int main(int argc, char* argv[]) {
             update_min_max_time(total_time, &min_time, &max_time);
 
             free(userInput);
-            free_args(args);
-            args = NULL;
+            free_args(args1);
+            args1 = NULL;
         }
         else {
             // Command failed
-            free_args(args);
-            args = NULL;
+            free_args(args1);
+            args1 = NULL;
             free(userInput);
         }
     }

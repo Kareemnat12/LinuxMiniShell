@@ -1,1 +1,8 @@
-echo hi : 0.00059 sec
+ls -l : 0.04991 sec
+echo hi : 0.03114 sec
+echo hello : 0.02990 sec
+ls -l : 0.03465 sec
+ls -al : 0.03631 sec
+ls -a : 0.03491 sec
+ls : 0.03315 sec
+sleep 2 : 2.03809 sec
