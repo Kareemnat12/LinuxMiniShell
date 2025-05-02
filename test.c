@@ -21,8 +21,10 @@ int pipe_split(char *input, char *left_cmd, char *right_cmd) {
         return 0; // no pipe at all
     }
 }
+
+
 int main() {
-    char input[] = "ls -l  grep txt";
+    char input[] = "ls -l | grep txt";
     char left[100], right[100];
 
     int has_pipe = pipe_split(input, left, right);
