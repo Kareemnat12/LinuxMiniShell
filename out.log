@@ -1,3 +1,11 @@
-ls -l : 0.06525 sec
-ps aux  : 0.06857 sec
-ps aux  : 0.07229 sec
+echo hello  : 0.02225 sec
+ls  : 0.02804 sec
+echo hello nig  : 0.01983 sec
+cat test.txt : 0.01802 sec
+echo shit  : 0.01799 sec
+cat ff.txt : 0.02023 sec
+cat dd.txt : 0.02128 sec
+rm ff.txt : 0.02268 sec
+rm dd.txt : 0.01456 sec
+rm test.txt : 0.02408 sec
+ls : 0.02150 sec

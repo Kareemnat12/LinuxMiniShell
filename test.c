@@ -1,37 +1,42 @@
-#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 
-int pipe_split(char *input, char *left_cmd, char *right_cmd) {
-    char *token = strtok(input, "|");
+// Function to write to file (append or overwrite)
+void write_to_file(const char *filename, const char *content, int append) {
+    int flags = O_WRONLY | O_CREAT;
+    if (append)
+        flags |= O_APPEND;
+    else
+        flags |= O_TRUNC;
 
-    if (token) {
-        strcpy(left_cmd, token);
-
-        token = strtok(NULL, "|");
-        if (token) {
-            strcpy(right_cmd, token);
-            return 1; // pipe exists
-        } else {
-            right_cmd[0] = '\0';
-            return 0; // no second command after pipe
-        }
-    } else {
-        strcpy(left_cmd, input);
-        right_cmd[0] = '\0';
-        return 0; // no pipe at all
+    int fd = open(filename, flags, 0644);
+    if (fd == -1) {
+        perror("open failed");
+        return;
     }
+
+    if (write(fd, content, strlen(content)) == -1) {
+        perror("write failed");
+    }
+
+    close(fd);
 }
 
-
+// Main to test writing
 int main() {
-    char input[] = "ls -l | grep txt";
-    char left[100], right[100];
+    const char *filename = "test_output.txt";
 
-    int has_pipe = pipe_split(input, left, right);
+    // Test overwrite mode
+    printf("Writing in overwrite mode...\n");
+    write_to_file(filename, "First line: Overwritten content!\n", 0);
 
-    printf("Pipe? %s\n", has_pipe ? "YES" : "NO");
-    printf("Left:  '%s'\n", left);
-    printf("Right: '%s'\n", right);
+    // Test append mode
+    printf("Appending more content...\n");
+    write_to_file(filename, "Second line: Appended content!\n", 1);
+    write_to_file(filename, "Third line: Appended again!\n", 1);
 
+    printf("Done. Check the '%s' file!\n", filename);
     return 0;
 }

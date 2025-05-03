@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +31,8 @@ int is_dangerous_command(char **user_args, int user_args_len);
 float time_diff(struct timespec start, struct timespec end);
 void update_min_max_time(double current_time, double *min_time, double *max_time);
 void prompt();
-
+void my_tee ();
+void write_to_file(const char *filename, const char *content, int append);
 /////////////////////  GLOBAL VARIABLES  /////////////////////
 // Command handling
 char **Danger_CMD;              // List of dangerous commands loaded from file
@@ -54,7 +56,8 @@ double max_time = 0;                   // Maximum command execution time
 int semi_dangerous_cmd_count = 0;      // Number of similar-but-allowed commands
 
 int pip_flag = 0;                     // Flag for pipe existence
-
+int pipefd[2];                      // For pipe communication
+int append_flg=0;
 /////////////////////  MAIN FUNCTION  /////////////////////
 /**
  * Main function - Our simple shell implementation
@@ -73,7 +76,6 @@ int main(int argc, char* argv[]) {
     const char *input_file = argv[1];   // File containing dangerous commands
     char left_cmd[MAX_INPUT_LENGTH];
     char right_cmd[MAX_INPUT_LENGTH];
-    int pipefd[2];                      // For pipe communication
     pid_t right_pid = 0;
 
     // Load the list of dangerous commands from file
@@ -120,9 +122,9 @@ int main(int argc, char* argv[]) {
         pip_flag = pipe_split(userInput, left_cmd, right_cmd);
         trim_inplace(left_cmd);
         trim_inplace(right_cmd);
-        printf("/////////DEBUGGGING:%s||||||||||\n", left_cmd);
-        printf("/////////DEBUGGGING:%s||||||||||\n", right_cmd);
-        printf("/////////DEBUGGGING:%d||||||||\n", pip_flag);
+        // printf("/////////DEBUGGGING:%s||||||||||\n", left_cmd);
+        // printf("/////////DEBUGGGING:%s||||||||||\n", right_cmd);
+        // printf("/////////DEBUGGGING:%d||||||||\n", pip_flag);
 
         // Split commands into arguments
         l_args = split_to_args(left_cmd, delim, &l_args_len);
@@ -202,8 +204,17 @@ int main(int argc, char* argv[]) {
             exit(127);  // Exit with error code 127 if execvp fails
         }
 
+
         // Execute right command if pipe exists
         if (pip_flag) {
+            if (strcmp(r_args[1],"-a")==0) {
+                append_flg=1;
+            }
+            if (strcmp(r_args[0],"my_tee")==0) {
+                my_tee();
+            }
+
+            else{
             right_pid = fork();
             if (right_pid < 0) {
                 // Fork failed
@@ -225,7 +236,7 @@ int main(int argc, char* argv[]) {
                 exit(127);  // Exit with error code 127 if execvp fails
             }
         }
-
+    }
         // Parent process waits for child processes to complete
         close(pipefd[0]);
         close(pipefd[1]);
@@ -750,4 +761,59 @@ int pipe_split(char *input, char *left_cmd, char *right_cmd) {
         right_cmd[0] = '\0';
         return 0; // no pipe at all
     }
+}
+
+
+void my_tee () {
+    // This function is a placeholder for the tee command
+    // It should be implemented to handle the output redirection
+    // and writing to the pipe as needed.
+    // For now, it does nothing.
+    close(pipefd[1]); // Close write end (only reading)
+    int bytes;
+    char buffer[MAX_INPUT_LENGTH];
+    char result[MAX_INPUT_LENGTH] ; // Initialize result to an empty string
+    result[0] = '\0'; // Initialize as empty string
+    while ((bytes = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[bytes] = '\0';
+        strcat(result, buffer); // Append to result string
+    }
+    close(pipefd[0]);
+    write(STDOUT_FILENO, result, strlen(result));
+    for (int i =1; i<r_args_len;i++) {
+        write_to_file(r_args[i], result, append_flg);
+    }
+
+
+}
+
+
+
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+
+void write_to_file(const char *filename, const char *content, int append) {
+    int fd;
+
+    // Open the file based on the append flag
+    if (append) {
+        fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    } else {
+        fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    }
+
+    if (fd == -1) {
+        perror("open failed");
+        return;
+    }
+
+    // Write content to the file
+    if (write(fd, content, strlen(content)) == -1) {
+        perror("write failed");
+    }
+
+    // Close the file
+    close(fd);
 }

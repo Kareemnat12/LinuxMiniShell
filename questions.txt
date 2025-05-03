@@ -5,3 +5,7 @@ dose the | must be with one space or it can be without space?
 
 
 dont forget to use signal handler for wait pid and these sstuff
+
+dose max args for total with pipe or for every command has its own max args?
+
+dont forget to check the output file to return full command
