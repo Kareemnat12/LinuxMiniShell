@@ -2,3 +2,6 @@ Dont forget to correct the statistics stuff mesurements
 
 
 dose the | must be with one space or it can be without space?
+
+
+dont forget to use signal handler for wait pid and these sstuff

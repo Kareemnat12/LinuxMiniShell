@@ -227,13 +227,12 @@ int main(int argc, char* argv[]) {
         }
 
         // Parent process waits for child processes to complete
-        int status;
         close(pipefd[0]);
         close(pipefd[1]);
-
+        int left_status;
         if (pip_flag) {
             // Wait for both processes if pipe was used
-            int left_status, right_status;
+            int right_status;
             waitpid(left_pid, &left_status, 0);
             waitpid(right_pid, &right_status, 0);
 
@@ -259,11 +258,11 @@ int main(int argc, char* argv[]) {
             }
         } else {
             // Wait only for left process if no pipe
-            int status;
-            waitpid(left_pid, &status, 0);
+
+            waitpid(left_pid, &left_status, 0);
 
             // If command was successful, update statistics and log
-            if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+            if (WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0) {
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 float total_time = time_diff(start, end);
                 append_to_log(output_file, userInput, total_time);
