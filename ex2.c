@@ -7,21 +7,18 @@
 #include <bits/time.h>
 #include <sys/wait.h>
 
-/* ---- Constants ---- */
+/////////////////////  CONSTANTS  /////////////////////
 const int MAX_INPUT_LENGTH = 1024;  // Maximum length for user input
 const int MAX_ARGC = 6;             // Maximum number of command arguments allowed
 const char delim[] = " ";           // Delimiter for splitting command strings
 
-/* ---- Function prototypes ---- */
+/////////////////////  FUNCTION PROTOTYPES  /////////////////////
 // Input handling
 void get_string(char* buffer, size_t buffer_size);
 char** split_to_args(const char *string, const char *delimiter, int *count);
 int checkMultipleSpaces(const char* input);
 char* trim_inplace(char* str);
 void free_args(char **args);
-
-
-
 int pipe_split(char *input, char *left_cmd, char *right_cmd);
 
 // File operations
@@ -34,11 +31,11 @@ float time_diff(struct timespec start, struct timespec end);
 void update_min_max_time(double current_time, double *min_time, double *max_time);
 void prompt();
 
-/* ---- Global variables ---- */
+/////////////////////  GLOBAL VARIABLES  /////////////////////
 // Command handling
 char **Danger_CMD;              // List of dangerous commands loaded from file
-int l_args_len;                   // Number of arguments in current command
-int r_args_len;
+int l_args_len;                 // Number of arguments in current command
+int r_args_len;                 // Number of arguments in right command (after pipe)
 int numLines = 0;               // Number of dangerous commands in the file
 char **l_args;                  // Current command arguments array for left command
 char **r_args;                  // Current command arguments array for right command
@@ -56,6 +53,9 @@ double min_time = 0;                   // Minimum command execution time
 double max_time = 0;                   // Maximum command execution time
 int semi_dangerous_cmd_count = 0;      // Number of similar-but-allowed commands
 
+int pip_flag = 0;                     // Flag for pipe existence
+
+/////////////////////  MAIN FUNCTION  /////////////////////
 /**
  * Main function - Our simple shell implementation
  * Reads dangerous commands from a file, processes user input,
@@ -73,9 +73,8 @@ int main(int argc, char* argv[]) {
     const char *input_file = argv[1];   // File containing dangerous commands
     char left_cmd[MAX_INPUT_LENGTH];
     char right_cmd[MAX_INPUT_LENGTH];
-    int pipefd[2]; // for pipe stuff
-     pid_t right_pid = 0;
-
+    int pipefd[2];                      // For pipe communication
+    pid_t right_pid = 0;
 
     // Load the list of dangerous commands from file
     Danger_CMD = read_file_lines(input_file, &numLines);
@@ -116,37 +115,40 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        // left and right command
-        int pip_flag= pipe_split(userInput, left_cmd, right_cmd);
+        ///////////////////// COMMAND PARSING /////////////////////
+        // Split input into left and right commands if pipe exists
+        pip_flag = pipe_split(userInput, left_cmd, right_cmd);
         trim_inplace(left_cmd);
         trim_inplace(right_cmd);
         printf("/////////DEBUGGGING:%s||||||||||\n", left_cmd);
         printf("/////////DEBUGGGING:%s||||||||||\n", right_cmd);
         printf("/////////DEBUGGGING:%d||||||||\n", pip_flag);
 
-
-        // Split the input into command and arguments
+        // Split commands into arguments
         l_args = split_to_args(left_cmd, delim, &l_args_len);
         r_args = split_to_args(right_cmd, delim, &r_args_len);
 
-
         // Skip if too many arguments
-        if (l_args == NULL|| (r_args == NULL && pip_flag)) {
+        if (l_args == NULL || (r_args == NULL && pip_flag)) {
             free_args(l_args);
             free_args(r_args);
-           // l_args = NULL;
             continue;
         }
-// dangerous check for left and right stuff args
-        // Check if this is a dangerous command we should block
+
+        ///////////////////// COMMAND SECURITY CHECK /////////////////////
+        // Check if commands are dangerous - check both left and right commands
         if (is_dangerous_command(l_args, l_args_len)) {
             free_args(l_args);
+            free_args(r_args);
             l_args = NULL;
+            r_args = NULL;
             continue;  // Skip execution of dangerous command
         }
 
         if (is_dangerous_command(r_args, r_args_len)) {
+            free_args(l_args);
             free_args(r_args);
+            l_args = NULL;
             r_args = NULL;
             continue;  // Skip execution of dangerous command
         }
@@ -154,105 +156,142 @@ int main(int argc, char* argv[]) {
         // Handle the exit command
         if (strcmp(l_args[0], "done") == 0) {
             free_args(l_args);
-            l_args = NULL;
+            free_args(r_args);
             free_args(Danger_CMD);
+            l_args = NULL;
+            r_args = NULL;
             Danger_CMD = NULL;
             printf("%d\n", dangerous_cmd_blocked_count + semi_dangerous_cmd_count);
             exit(0);
         }
-        //checkin if pipe is sucuss
+
+        ///////////////////// COMMAND EXECUTION /////////////////////
+        // Create pipe for command communication
         if (pipe(pipefd) == -1) {
             perror("pipe");
             exit(1);
         }
 
-        // Fork a child process to execute the command
-
-         const pid_t left_pid = fork();
-
+        // Execute left command
+        const pid_t left_pid = fork();
         if (left_pid < 0) {
             // Fork failed
             perror("Fork Failed");
             free_args(l_args);
+            free_args(r_args);
             l_args = NULL;
+            r_args = NULL;
             return 1;
         }
 
         if (left_pid == 0) {
-            // Child process - execute the command
-            if (pip_flag==0){
+            // Child process for left command
+            if (pip_flag == 0) {
+                // No pipe, just execute the command
                 execvp(l_args[0], l_args);
                 perror("execvp failed");
                 exit(127);  // Exit with error code 127 if execvp fails
-                }
+            }
+
+            // Set up pipe for output redirection
             dup2(pipefd[1], STDOUT_FILENO);  // Redirect stdout to write end of pipe
-            close(pipefd[0]);               // Close unused read end of pipe
-            close(pipefd[1]);               // Close write end of pipe
+            close(pipefd[0]);                // Close unused read end of pipe
+            close(pipefd[1]);                // Close write end of pipe after dup2
             execvp(l_args[0], l_args);
             perror("execvp failed");
             exit(127);  // Exit with error code 127 if execvp fails
         }
+
+        // Execute right command if pipe exists
+        if (pip_flag) {
             right_pid = fork();
             if (right_pid < 0) {
                 // Fork failed
                 perror("Fork Failed");
                 free_args(l_args);
+                free_args(r_args);
                 l_args = NULL;
+                r_args = NULL;
                 return 1;
             }
+
             if (right_pid == 0) {
-                // Child process - execute the command
+                // Child process for right command
                 dup2(pipefd[0], STDIN_FILENO);  // Redirect stdin to read end of pipe
                 close(pipefd[1]);               // Close unused write end of pipe
-                close(pipefd[0]);               // Close read end of pipe
+                close(pipefd[0]);               // Close read end of pipe after dup2
                 execvp(r_args[0], r_args);
                 perror("execvp failed");
                 exit(127);  // Exit with error code 127 if execvp fails
             }
+        }
 
-        // Parent process waits for child to complete
+        // Parent process waits for child processes to complete
         int status;
         close(pipefd[0]);
         close(pipefd[1]);
 
         if (pip_flag) {
-            close(pipefd[0]);
-            close(pipefd[1]);
-            waitpid(left_pid, NULL, 0);
-            waitpid(right_pid, NULL, 0);
-        } else {
-            waitpid(left_pid, NULL, 0);
-        }
+            // Wait for both processes if pipe was used
+            int left_status, right_status;
+            waitpid(left_pid, &left_status, 0);
+            waitpid(right_pid, &right_status, 0);
 
+            // Both commands must succeed for pipe operation to be considered successful
+            if (WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0 &&
+                WIFEXITED(right_status) && WEXITSTATUS(right_status) == 0) {
+                clock_gettime(CLOCK_MONOTONIC, &end);
+                float total_time = time_diff(start, end);
+                append_to_log(output_file, userInput, total_time);
 
-        // If command was successful, update statistics and log
-        if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-            clock_gettime(CLOCK_MONOTONIC, &end);
-            float total_time = time_diff(start, end);
-            append_to_log(output_file, userInput, total_time);
-
-            // Update all time statistics
-            last_cmd_time = total_time;
-            total_time_all += total_time;
-            total_cmd_count += 1;
-            average_time = total_time_all / total_cmd_count;
-            update_min_max_time(total_time, &min_time, &max_time);
-
-            free_args(l_args);
-            l_args = NULL;
-        }
-        else {
-            // Command failed
-            if (flag_semi_dangerous) {
-                semi_dangerous_cmd_count -= 1;
-                flag_semi_dangerous = 0;  // Reset the flag
+                // Update all time statistics
+                last_cmd_time = total_time;
+                total_time_all += total_time;
+                total_cmd_count += 1;
+                average_time = total_time_all / total_cmd_count;
+                update_min_max_time(total_time, &min_time, &max_time);
+            } else {
+                // Command failed
+                if (flag_semi_dangerous) {
+                    semi_dangerous_cmd_count -= 1;
+                    flag_semi_dangerous = 0;  // Reset the flag
+                }
             }
-            free_args(l_args);
-            l_args = NULL;
+        } else {
+            // Wait only for left process if no pipe
+            int status;
+            waitpid(left_pid, &status, 0);
+
+            // If command was successful, update statistics and log
+            if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+                clock_gettime(CLOCK_MONOTONIC, &end);
+                float total_time = time_diff(start, end);
+                append_to_log(output_file, userInput, total_time);
+
+                // Update all time statistics
+                last_cmd_time = total_time;
+                total_time_all += total_time;
+                total_cmd_count += 1;
+                average_time = total_time_all / total_cmd_count;
+                update_min_max_time(total_time, &min_time, &max_time);
+            } else {
+                // Command failed
+                if (flag_semi_dangerous) {
+                    semi_dangerous_cmd_count -= 1;
+                    flag_semi_dangerous = 0;  // Reset the flag
+                }
+            }
         }
+
+        // Clean up argument arrays
+        free_args(l_args);
+        free_args(r_args);
+        l_args = NULL;
+        r_args = NULL;
     }
 }
 
+/////////////////////  GET_STRING  /////////////////////
 /**
  * Gets user input using a static buffer
  *
@@ -290,6 +329,7 @@ void get_string(char* buffer, size_t buffer_size) {
     }
 }
 
+/////////////////////  SPLIT_TO_ARGS  /////////////////////
 /**
  * Split string into an array of arguments (argv style)
  *
@@ -355,6 +395,7 @@ char **split_to_args(const char *string, const char *delimiter, int *count) {
     return argf;
 }
 
+/////////////////////  CHECK_MULTIPLE_SPACES  /////////////////////
 /**
  * Check for multiple consecutive spaces in a string
  *
@@ -389,6 +430,7 @@ int checkMultipleSpaces(const char* input) {
     return 0;
 }
 
+/////////////////////  FREE_ARGS  /////////////////////
 /**
  * Free memory allocated for arguments array
  *
@@ -402,10 +444,10 @@ void free_args(char **args) {
             args[i] = NULL;    // Prevent accidental reuse
         }
         free(args);            // Free the array itself
-        args = NULL;           // Prevent accidental reuse
     }
 }
 
+/////////////////////  READ_FILE_LINES  /////////////////////
 /**
  * Read lines from a file into a string array
  *
@@ -491,6 +533,7 @@ char** read_file_lines(const char* filename, int* num_lines) {
     return lines;
 }
 
+/////////////////////  IS_DANGEROUS_COMMAND  /////////////////////
 /**
  * Check if a command is in the list of dangerous commands
  *
@@ -498,6 +541,11 @@ char** read_file_lines(const char* filename, int* num_lines) {
  * Returns 1 if dangerous (should be blocked), 0 otherwise
  */
 int is_dangerous_command(char **user_args, int user_args_len) {
+    // Return early if no arguments to check
+    if (user_args == NULL || user_args_len == 0) {
+        return 0;
+    }
+
     int found_similar = 0;
     char *similar_command = NULL;  // Store the similar dangerous command
 
@@ -550,6 +598,7 @@ int is_dangerous_command(char **user_args, int user_args_len) {
     return 0;  // Allow execution (with warning if similar command found)
 }
 
+/////////////////////  TIME_DIFF  /////////////////////
 /**
  * Calculate time difference between two timespec structs
  *
@@ -573,6 +622,7 @@ float time_diff(struct timespec start, struct timespec end) {
     return total_time;
 }
 
+/////////////////////  APPEND_TO_LOG  /////////////////////
 /**
  * Append command and execution time to log file
  *
@@ -591,6 +641,7 @@ void append_to_log(const char *filename, char *val1, float val2) {
     fclose(file);
 }
 
+/////////////////////  PROMPT  /////////////////////
 /**
  * Display the shell prompt with current statistics
  *
@@ -608,6 +659,7 @@ void prompt() {
     fflush(stdout);  // Ensure prompt appears immediately
 }
 
+/////////////////////  UPDATE_MIN_MAX_TIME  /////////////////////
 /**
  * Update minimum and maximum execution times
  *
@@ -626,6 +678,7 @@ void update_min_max_time(double current_time, double *min_time, double *max_time
     }
 }
 
+/////////////////////  TRIM_INPLACE  /////////////////////
 /**
  * Trims leading and trailing whitespace from a string in-place
  *
@@ -672,10 +725,13 @@ char* trim_inplace(char* str) {
     return str;
 }
 
-
-
-
-////V2
+/////////////////////  PIPE_SPLIT  /////////////////////
+/**
+ * Split input string into left and right commands based on pipe symbol
+ *
+ * Parses the input string and separates it into two commands if a pipe exists.
+ * Returns 1 if pipe exists, 0 otherwise
+ */
 int pipe_split(char *input, char *left_cmd, char *right_cmd) {
     char *token = strtok(input, "|");
 
