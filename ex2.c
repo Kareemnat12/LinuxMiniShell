@@ -1,5 +1,4 @@
 #include <fcntl.h>
-#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,7 +6,7 @@
 #include <unistd.h>
 #include <bits/time.h>
 #include <sys/wait.h>
-
+#include <signal.h>
 /////////////////////  CONSTANTS  /////////////////////
 const int MAX_INPUT_LENGTH = 1024;  // Maximum length for user input
 const int MAX_ARGC = 6;             // Maximum number of command arguments allowed
@@ -58,6 +57,14 @@ int semi_dangerous_cmd_count = 0;      // Number of similar-but-allowed commands
 int pip_flag = 0;                     // Flag for pipe existence
 int pipefd[2];                      // For pipe communication
 int append_flg=0;
+
+
+int left_status;
+int right_status;
+
+///// Handler for SIGCHLD
+int background_flag = 0; // PID of the background process
+void sigchld_handler(int sig);
 /////////////////////  MAIN FUNCTION  /////////////////////
 /**
  * Main function - Our simple shell implementation
@@ -93,6 +100,7 @@ int main(int argc, char* argv[]) {
 
     // Main command processing loop
     while (1) {
+        signal(SIGCHLD, sigchld_handler);
         // Display the prompt with current statistics
         prompt();
 
@@ -153,6 +161,11 @@ int main(int argc, char* argv[]) {
             l_args = NULL;
             r_args = NULL;
             continue;  // Skip execution of dangerous command
+        }
+        // check if command has background flag
+        if (strcmp(l_args[l_args_len-1], "&") == 0) {
+            background_flag = 1;
+            l_args[l_args_len-1] = NULL; // Remove the background flag from arguments
         }
 
         // Handle the exit command
@@ -240,59 +253,22 @@ int main(int argc, char* argv[]) {
         // Parent process waits for child processes to complete
         close(pipefd[0]);
         close(pipefd[1]);
-        int left_status;
+        //int left_status;
         if (pip_flag) {
             // Wait for both processes if pipe was used
-            int right_status;
             waitpid(left_pid, &left_status, 0);
             waitpid(right_pid, &right_status, 0);
 
-            // Both commands must succeed for pipe operation to be considered successful
-            if (WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0 &&
-                WIFEXITED(right_status) && WEXITSTATUS(right_status) == 0) {
-                clock_gettime(CLOCK_MONOTONIC, &end);
-                float total_time = time_diff(start, end);
-                append_to_log(output_file, userInput, total_time);
 
-                // Update all time statistics
-                last_cmd_time = total_time;
-                total_time_all += total_time;
-                total_cmd_count += 1;
-                average_time = total_time_all / total_cmd_count;
-                update_min_max_time(total_time, &min_time, &max_time);
-            } else {
-                // Command failed
-                if (flag_semi_dangerous) {
-                    semi_dangerous_cmd_count -= 1;
-                    flag_semi_dangerous = 0;  // Reset the flag
-                }
-            }
         } else {
             // Wait only for left process if no pipe
+            if (!background_flag) // if not background process
+                waitpid(left_pid, &left_status, 0);
 
-            waitpid(left_pid, &left_status, 0);
 
-            // If command was successful, update statistics and log
-            if (WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0) {
-                clock_gettime(CLOCK_MONOTONIC, &end);
-                float total_time = time_diff(start, end);
-                append_to_log(output_file, userInput, total_time);
 
-                // Update all time statistics
-                last_cmd_time = total_time;
-                total_time_all += total_time;
-                total_cmd_count += 1;
-                average_time = total_time_all / total_cmd_count;
-                update_min_max_time(total_time, &min_time, &max_time);
-            } else {
-                // Command failed
-                if (flag_semi_dangerous) {
-                    semi_dangerous_cmd_count -= 1;
-                    flag_semi_dangerous = 0;  // Reset the flag
-                }
-            }
+            background_flag = 0; // Reset background flag for next command
         }
-
         // Clean up argument arrays
         free_args(l_args);
         free_args(r_args);
@@ -816,4 +792,56 @@ void write_to_file(const char *filename, const char *content, int append) {
 
     // Close the file
     close(fd);
+}
+
+
+//// Handler for SIGCHLD
+void sigchld_handler(int sig) {
+    if(pip_flag){
+        // Both commands must succeed for pipe operation to be considered successful
+        if (WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0 &&
+            WIFEXITED(right_status) && WEXITSTATUS(right_status) == 0) {
+            clock_gettime(CLOCK_MONOTONIC, &end);
+            float total_time = time_diff(start, end);
+            //append_to_log(output_file, userInput, total_time);
+
+            // Update all time statistics
+            last_cmd_time = total_time;
+            total_time_all += total_time;
+            total_cmd_count += 1;
+            average_time = total_time_all / total_cmd_count;
+            update_min_max_time(total_time, &min_time, &max_time);
+        } else {
+            // Command failed
+            if (flag_semi_dangerous) {
+                semi_dangerous_cmd_count -= 1;
+                flag_semi_dangerous = 0;  // Reset the flag
+            }
+        }
+
+    }
+
+
+
+    else {
+    // If command was successful, update statistics and log
+    if (WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0) {
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        float total_time = time_diff(start, end);
+       // append_to_log(output_file, userInput, total_time);
+
+        // Update all time statistics
+        last_cmd_time = total_time;
+        total_time_all += total_time;
+        total_cmd_count += 1;
+        average_time = total_time_all / total_cmd_count;
+        update_min_max_time(total_time, &min_time, &max_time);
+    } else {
+        // Command failed
+        if (flag_semi_dangerous) {
+            semi_dangerous_cmd_count -= 1;
+            flag_semi_dangerous = 0;  // Reset the flag
+         }
+        }
+    }
 }

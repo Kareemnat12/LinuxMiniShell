@@ -1,4 +1,4 @@
-Dont forget to correct the statistics stuff mesurements
+Dont forget to correct the statistics stuff mesurements and include them for waits stuff
 
 
 dose the | must be with one space or it can be without space?
@@ -9,3 +9,6 @@ dont forget to use signal handler for wait pid and these sstuff
 dose max args for total with pipe or for every command has its own max args?
 
 dont forget to check the output file to return full command
+
+what will happen for & and time mesuerment?
+handle the shit of &  aolone
