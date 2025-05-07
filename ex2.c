@@ -11,7 +11,7 @@
 const int MAX_INPUT_LENGTH = 1024;  // Maximum length for user input
 const int MAX_ARGC = 6;             // Maximum number of command arguments allowed
 const char delim[] = " ";           // Delimiter for splitting command strings
-
+#define MAX_INPUT_LENGTHH 1025
 /////////////////////  FUNCTION PROTOTYPES  /////////////////////
 // Input handling
 void get_string(char* buffer, size_t buffer_size);
@@ -32,6 +32,7 @@ void update_min_max_time(double current_time, double *min_time, double *max_time
 void prompt();
 void my_tee ();
 void write_to_file(const char *filename, const char *content, int append);
+void check_append_flag(const char *userInput, int *append_flg);
 /////////////////////  GLOBAL VARIABLES  /////////////////////
 // Command handling
 char **Danger_CMD;              // List of dangerous commands loaded from file
@@ -61,10 +62,29 @@ int append_flg=0;
 
 int left_status;
 int right_status;
-
-///// Handler for SIGCHLD
+char userInput[MAX_INPUT_LENGTHH];
 int background_flag = 0; // PID of the background process
 void sigchld_handler(int sig);
+
+
+
+////////DEBUGGER
+
+
+
+void print_array(const char **array, int size) {
+    printf("//////DEBUG????????[");
+    for (int i = 0; i < size; i++) {
+        printf("\"%s\"", array[i]);
+        if (i < size - 1) {
+            printf(", ");
+        }
+    }
+    printf("]\n");
+}
+
+
+/////////
 /////////////////////  MAIN FUNCTION  /////////////////////
 /**
  * Main function - Our simple shell implementation
@@ -105,7 +125,6 @@ int main(int argc, char* argv[]) {
         prompt();
 
         // Static buffer for user input
-        char userInput[MAX_INPUT_LENGTH + 1];
 
         // Get user input
         get_string(userInput, sizeof(userInput));
@@ -130,14 +149,15 @@ int main(int argc, char* argv[]) {
         pip_flag = pipe_split(userInput, left_cmd, right_cmd);
         trim_inplace(left_cmd);
         trim_inplace(right_cmd);
-        // printf("/////////DEBUGGGING:%s||||||||||\n", left_cmd);
-        // printf("/////////DEBUGGGING:%s||||||||||\n", right_cmd);
+        printf("/////////DEBUGGGING:%s||||||||||\n", left_cmd);
+        printf("/////////DEBUGGGING:%s||||||||||\n", right_cmd);
         // printf("/////////DEBUGGGING:%d||||||||\n", pip_flag);
 
         // Split commands into arguments
         l_args = split_to_args(left_cmd, delim, &l_args_len);
         r_args = split_to_args(right_cmd, delim, &r_args_len);
-
+        print_array((const char **) l_args, l_args_len);
+        print_array((const char **) r_args, r_args_len);
         // Skip if too many arguments
         if (l_args == NULL || (r_args == NULL && pip_flag)) {
             free_args(l_args);
@@ -165,11 +185,11 @@ int main(int argc, char* argv[]) {
         // check if command has background flag
         if (strcmp(l_args[l_args_len-1], "&") == 0) {
             background_flag = 1;
-            l_args[l_args_len-1] = NULL; // Remove the background flag from arguments
+            l_args[l_args_len-1] = NULL  ; // Remove the background flag from arguments
         }
 
         // Handle the exit command
-        if (strcmp(l_args[0], "done") == 0) {
+        if ( strcmp(l_args[0], "done") == 0) {
             free_args(l_args);
             free_args(r_args);
             free_args(Danger_CMD);
@@ -220,36 +240,35 @@ int main(int argc, char* argv[]) {
 
         // Execute right command if pipe exists
         if (pip_flag) {
-            if (strcmp(r_args[1],"-a")==0) {
-                append_flg=1;
-            }
-            if (strcmp(r_args[0],"my_tee")==0) {
+            check_append_flag(userInput,&append_flg);
+            printf("/////////////DEBUGGGGGGG?????????%d\n",append_flg);
+            if (strcmp(r_args[0],"my_tee;")) {
                 my_tee();
             }
 
             else{
-            right_pid = fork();
-            if (right_pid < 0) {
-                // Fork failed
-                perror("Fork Failed");
-                free_args(l_args);
-                free_args(r_args);
-                l_args = NULL;
-                r_args = NULL;
-                return 1;
-            }
+                right_pid = fork();
+                if (right_pid < 0) {
+                    // Fork failed
+                    perror("Fork Failed");
+                    free_args(l_args);
+                    free_args(r_args);
+                    l_args = NULL;
+                    r_args = NULL;
+                    return 1;
+                }
 
-            if (right_pid == 0) {
-                // Child process for right command
-                dup2(pipefd[0], STDIN_FILENO);  // Redirect stdin to read end of pipe
-                close(pipefd[1]);               // Close unused write end of pipe
-                close(pipefd[0]);               // Close read end of pipe after dup2
-                execvp(r_args[0], r_args);
-                perror("execvp failed");
-                exit(127);  // Exit with error code 127 if execvp fails
+                if (right_pid == 0) {
+                    // Child process for right command
+                    dup2(pipefd[0], STDIN_FILENO);  // Redirect stdin to read end of pipe
+                    close(pipefd[1]);               // Close unused write end of pipe
+                    close(pipefd[0]);               // Close read end of pipe after dup2
+                    execvp(r_args[0], r_args);
+                    perror("execvp failed");
+                    exit(127);  // Exit with error code 127 if execvp fails
+                }
             }
         }
-    }
         // Parent process waits for child processes to complete
         close(pipefd[0]);
         close(pipefd[1]);
@@ -719,7 +738,13 @@ char* trim_inplace(char* str) {
  * Returns 1 if pipe exists, 0 otherwise
  */
 int pipe_split(char *input, char *left_cmd, char *right_cmd) {
-    char *token = strtok(input, "|");
+    // Make a copy of the input string to avoid modifying the original
+    char *input_copy = strdup(input);
+    if (!input_copy) {
+        return -1; // Memory allocation failed
+    }
+
+    char *token = strtok(input_copy, "|");
 
     if (token) {
         strcpy(left_cmd, token);
@@ -727,18 +752,20 @@ int pipe_split(char *input, char *left_cmd, char *right_cmd) {
         token = strtok(NULL, "|");
         if (token) {
             strcpy(right_cmd, token);
+            free(input_copy); // Free the allocated memory
             return 1; // pipe exists
         } else {
             right_cmd[0] = '\0';
+            free(input_copy); // Free the allocated memory
             return 0; // no second command after pipe
         }
     } else {
         strcpy(left_cmd, input);
         right_cmd[0] = '\0';
+        free(input_copy); // Free the allocated memory
         return 0; // no pipe at all
     }
 }
-
 
 void my_tee () {
     // This function is a placeholder for the tee command
@@ -824,24 +851,37 @@ void sigchld_handler(int sig) {
 
 
     else {
-    // If command was successful, update statistics and log
-    if (WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0) {
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        float total_time = time_diff(start, end);
-       // append_to_log(output_file, userInput, total_time);
+        // If command was successful, update statistics and log
+        if (WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0) {
+            clock_gettime(CLOCK_MONOTONIC, &end);
+            float total_time = time_diff(start, end);
+            // append_to_log(output_file, userInput, total_time);
 
-        // Update all time statistics
-        last_cmd_time = total_time;
-        total_time_all += total_time;
-        total_cmd_count += 1;
-        average_time = total_time_all / total_cmd_count;
-        update_min_max_time(total_time, &min_time, &max_time);
-    } else {
-        // Command failed
-        if (flag_semi_dangerous) {
-            semi_dangerous_cmd_count -= 1;
-            flag_semi_dangerous = 0;  // Reset the flag
-         }
+            // Update all time statistics
+            last_cmd_time = total_time;
+            total_time_all += total_time;
+            total_cmd_count += 1;
+            average_time = total_time_all / total_cmd_count;
+            update_min_max_time(total_time, &min_time, &max_time);
+        } else {
+            // Command failed
+            if (flag_semi_dangerous) {
+                semi_dangerous_cmd_count -= 1;
+                flag_semi_dangerous = 0;  // Reset the flag
+            }
         }
     }
 }
+
+
+
+void check_append_flag(const char *userInput, int *append_flg) {
+    // Check if the input contains the "-a" flag
+    if (strstr(userInput, "-a") != NULL) {
+        *append_flg = 1; // Enable append mode
+    } else {
+        *append_flg = 0; // D isable append mode
+    }
+}
+
+
