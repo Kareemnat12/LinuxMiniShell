@@ -138,44 +138,47 @@ void print_array(const char **array, int size) {
  * Updates statistics when child processes terminate
  */
 void sigchld_handler(int sig) {
-    if (pip_flag) {
-        // Both commands must succeed for pipe operation to be considered successful
-        if (WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0 &&
-            WIFEXITED(right_status) && WEXITSTATUS(right_status) == 0) {
-            clock_gettime(CLOCK_MONOTONIC, &end);
-            float total_time = time_diff(start, end);
+    int cmd_succeeded;
 
-            // Update all time statistics
-            last_cmd_time = total_time;
-            total_time_all += total_time;
-            total_cmd_count += 1;
-            average_time = total_time_all / total_cmd_count;
-            update_min_max_time(total_time, &min_time, &max_time);
+    if (pip_flag) {
+        cmd_succeeded = WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0 &&
+                        WIFEXITED(right_status) && WEXITSTATUS(right_status) == 0;
+    } else {
+        cmd_succeeded = WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0;
+    }
+
+    if (cmd_succeeded) {
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        float total_time = time_diff(start, end);
+
+        last_cmd_time = total_time;
+        total_time_all += total_time;
+        total_cmd_count += 1;
+        average_time = total_time_all / total_cmd_count;
+        update_min_max_time(total_time, &min_time, &max_time);
+    } else {
+        // Check for signal termination
+        if (pip_flag) {
+            if (WIFSIGNALED(left_status)) {
+                printf("Terminated by signal: SIG%s\n", strsignal(WTERMSIG(left_status)));
+            } else if (!WIFEXITED(left_status) || WEXITSTATUS(left_status) != 0) {
+                printf("Process exited with error code: %d\n", WEXITSTATUS(left_status));
+            } else if (WIFSIGNALED(right_status)) {
+                printf("Terminated by signal: SIG%s\n", strsignal(WTERMSIG(right_status)));
+            } else {
+                printf("Process exited with error code: %d\n", WEXITSTATUS(right_status));
+            }
         } else {
-            // Command failed
-            if (flag_semi_dangerous) {
-                semi_dangerous_cmd_count -= 1;
-                flag_semi_dangerous = 0;  // Reset the flag
+            if (WIFSIGNALED(left_status)) {
+                printf("Terminated by signal: SIG%s\n", strsignal(WTERMSIG(left_status)));
+            } else {
+                printf("Process exited with error code: %d\n", WEXITSTATUS(left_status));
             }
         }
-    } else {
-        // If command was successful, update statistics and log
-        if (WIFEXITED(left_status) && WEXITSTATUS(left_status) == 0) {
-            clock_gettime(CLOCK_MONOTONIC, &end);
-            float total_time = time_diff(start, end);
 
-            // Update all time statistics
-            last_cmd_time = total_time;
-            total_time_all += total_time;
-            total_cmd_count += 1;
-            average_time = total_time_all / total_cmd_count;
-            update_min_max_time(total_time, &min_time, &max_time);
-        } else {
-            // Command failed
-            if (flag_semi_dangerous) {
-                semi_dangerous_cmd_count -= 1;
-                flag_semi_dangerous = 0;  // Reset the flag
-            }
+        if (flag_semi_dangerous) {
+            semi_dangerous_cmd_count -= 1;
+            flag_semi_dangerous = 0;
         }
     }
 }

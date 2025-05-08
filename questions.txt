@@ -11,7 +11,7 @@ dose max args for total with pipe or for every command has its own max args?
 dont forget to check the output file to return full command
 
 what will happen for & and time mesuerment?
-handle the shit of &  aolone
+handle the shit of &  aolone important
 
 dose the 2> file append in the run ? or it ovverite in every error ?
 
