@@ -1,42 +1,33 @@
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/resource.h>
 
-// Function to write to file (append or overwrite)
-void write_to_file(const char *filename, const char *content, int append) {
-    int flags = O_WRONLY | O_CREAT;
-    if (append)
-        flags |= O_APPEND;
-    else
-        flags |= O_TRUNC;
-
-    int fd = open(filename, flags, 0644);
-    if (fd == -1) {
-        perror("open failed");
-        return;
-    }
-
-    if (write(fd, content, strlen(content)) == -1) {
-        perror("write failed");
-    }
-
-    close(fd);
+void cpu_limit_handler(int signum) {
+    printf("CPU time limit exceeded!\n");
+    exit(1);
 }
 
-// Main to test writing
 int main() {
-    const char *filename = "test_output.txt";
+    struct rlimit rl;
+    signal(SIGXCPU, cpu_limit_handler);
 
-    // Test overwrite mode
-    printf("Writing in overwrite mode...\n");
-    write_to_file(filename, "First line: Overwritten content!\n", 0);
+    getrlimit(RLIMIT_CPU, &rl);
+    printf("Current CPU limit: soft=%ld, hard=%ld sec\n",
+           (long)rl.rlim_cur, (long)rl.rlim_max);
 
-    // Test append mode
-    printf("Appending more content...\n");
-    write_to_file(filename, "Second line: Appended content!\n", 1);
-    write_to_file(filename, "Third line: Appended again!\n", 1);
+    rl.rlim_cur = 2;  /* Soft limit: 2 seconds */
+    rl.rlim_max = 3;  /* Hard limit: 3 seconds */
+    setrlimit(RLIMIT_CPU, &rl);
 
-    printf("Done. Check the '%s' file!\n", filename);
+    printf("Starting CPU-intensive task...\n");
+    while (1) {
+        for (int i = 0; i < 10000000; i++) {
+            double x = i * 3.14159;
+            x = x / 2.71828;
+        }
+    }
+
     return 0;
 }
