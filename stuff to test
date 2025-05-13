@@ -1,0 +1,5 @@
+//pipe
+echo hello | tr a-z A-Z
+echo hey there | // it prints "hey there" to the console
+| tr a-z A-Z // falis
+

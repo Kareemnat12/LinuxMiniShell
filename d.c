@@ -20,12 +20,10 @@
 #include <bits/time.h>
 #include <sys/resource.h>
 #include <ctype.h>
-#include <asm-generic/errno-base.h>
-#include <errno.h>
 
 /**************************** CONSTANTS ****************************/
 const int MAX_INPUT_LENGTH = 1024;   // Maximum length for user input
-const int MAX_ARGC = 45;              // Maximum number of command arguments allowed
+const int MAX_ARGC = 15;              // Maximum number of command arguments allowed
 const char delim[] = " ";            // Delimiter for splitting command strings
 #define MAX_INPUT_LENGTHH 1025       // Fixed buffer size for input
 
@@ -52,14 +50,12 @@ void check_append_flag(const char *userInput, int *append_flg);
 void redirect_stderr_to_file(const char *filename);
 void check_and_redirect_stderr(char **l_args);
 void sigchld_handler(int sig);
-void handle_execvp_errors_in_child(char **args);
 
 // Custom commands
 int my_tee_handler(void);
 
 // Debug helpers
 void print_array(const char **array, int size);
-void sigxcpu_handler(int sig);
 /********************** CUSTOM COMMANDS STRUCTURE **********************/
 typedef struct {
     const char *name;          // Command name
@@ -108,34 +104,6 @@ int background_flag = 0;      // Flag for background execution
 char **check_rsc_lmt(char **argu);
 unsigned long long parse_value_with_unit(const char *str);
 int get_resource_type(const char *res_name);
-
-
-/**
- * Error handling function for child processes when exec fails
- */
-void handle_execvp_errors_in_child(char **args) {
-    if (!args || !args[0]) {
-        fprintf(stderr, "Empty command\n");
-        exit(1);
-    }
-
-    // Try to execute the command
-    execvp(args[0], args);
-
-    // If execvp returns, there was an error
-    if (errno == EMFILE) {
-        fprintf(stderr, "Too many open files!\n");
-    } else {
-        perror("exec failed");
-    }
-    exit(127);  // Standard exit code for command not found/exec error
-}
-
-
-void sigxcpu_handler(int sig) {
-    printf("Process exceeded CPU time limit (SIGXCPU received).\n");
-    exit(1); // Ensure the process terminates
-}
 /********************** HELPER FUNCTIONS **********************/
 /**
  * Find a custom command by name
@@ -152,6 +120,13 @@ const CustomCommand* find_custom_command(const char *cmd_name) {
         }
     }
     return NULL;
+}
+
+
+void sigxcpu_handler(int sig) {
+    // This handler is kept simple since child termination status
+    // is already checked in sigchld_handler
+    // The actual message is printed in sigchld_handler when detecting SIGXCPU
 }
 
 /**
@@ -195,17 +170,32 @@ void sigchld_handler(int sig) {
         // Check for signal termination
         if (pip_flag) {
             if (WIFSIGNALED(left_status)) {
-                printf("Terminated by signal: SIG%s\n", strsignal(WTERMSIG(left_status)));
+                int sig = WTERMSIG(left_status);
+                if (sig == SIGXCPU) {
+                    printf("CPU time limit exceeded!\n");
+                } else {
+                    printf("Terminated by signal: %s\n", strsignal(sig));
+                }
             } else if (!WIFEXITED(left_status) || WEXITSTATUS(left_status) != 0) {
                 printf("Process exited with error code: %d\n", WEXITSTATUS(left_status));
             } else if (WIFSIGNALED(right_status)) {
-                printf("Terminated by signal: SIG%s\n", strsignal(WTERMSIG(right_status)));
+                int sig = WTERMSIG(right_status);
+                if (sig == SIGXCPU) {
+                    printf("CPU time limit exceeded!\n");
+                } else {
+                    printf("Terminated by signal: %s\n", strsignal(sig));
+                }
             } else {
                 printf("Process exited with error code: %d\n", WEXITSTATUS(right_status));
             }
         } else {
             if (WIFSIGNALED(left_status)) {
-                printf("Terminated by signal: SIG%s\n", strsignal(WTERMSIG(left_status)));
+                int sig = WTERMSIG(left_status);
+                if (sig == SIGXCPU) {
+                    printf("CPU time limit exceeded!\n");
+                } else {
+                    printf("Terminated by signal: %s\n", strsignal(sig));
+                }
             } else {
                 printf("Process exited with error code: %d\n", WEXITSTATUS(left_status));
             }
@@ -889,10 +879,6 @@ int main(int argc, char* argv[]) {
             l_args_len--;                  // Decrease arg count
         }
 
-
-
-
-
         // Handle the exit command
         if (strcmp(l_args[0], "done") == 0) {
             free_args(l_args);
@@ -928,29 +914,25 @@ int main(int argc, char* argv[]) {
         }
 
         if (left_pid == 0) {
-            // Set up signal handler in the child process before exec
-            struct sigaction sa;
-            sa.sa_handler = sigxcpu_handler;
-            sigemptyset(&sa.sa_mask);
-            sa.sa_flags = 0;
-            sigaction(SIGXCPU, &sa, NULL);
-
             char **cmd = check_rsc_lmt(l_args);  // Check for resource limits
             if (cmd != NULL) {
                 l_args = cmd;
-            }
-            // Child process for left command
+            }            // Child process for left command
             if (pip_flag == 0) {
+
                 // No pipe, just execute the command
-                handle_execvp_errors_in_child(l_args);
-                // We never reach here if exec succeeds
+                execvp(l_args[0], l_args);
+                perror("execvp failed");
+                exit(127);  // Exit with error code 127 if execvp fails
             }
 
             // Set up pipe for output redirection
             dup2(pipefd[1], STDOUT_FILENO);  // Redirect stdout to write end of pipe
             close(pipefd[0]);                // Close unused read end of pipe
             close(pipefd[1]);                // Close write end of pipe after dup2
-            handle_execvp_errors_in_child(l_args);
+            execvp(l_args[0], l_args);
+            perror("execvp failed");
+            exit(127);  // Exit with error code 127 if execvp fails
         }
 
         // Execute right command if pipe exists
@@ -984,14 +966,7 @@ int main(int argc, char* argv[]) {
                     }
 
                     if (right_pid == 0) {
-                        // Set up signal handler in the child process before exec
-                        struct sigaction sa;
-                        sa.sa_handler = sigxcpu_handler;
-                        sigemptyset(&sa.sa_mask);
-                        sa.sa_flags = 0;
-                        sigaction(SIGXCPU, &sa, NULL);
-
-                        char **cmd2 = check_rsc_lmt(r_args);  // Check for resource limits
+                        char **cmd2 = check_rsc_lmt(l_args);  // Check for resource limits
                         if (cmd2 != NULL) {
                             r_args = cmd2;
                         }
@@ -999,7 +974,9 @@ int main(int argc, char* argv[]) {
                         dup2(pipefd[0], STDIN_FILENO);  // Redirect stdin to read end of pipe
                         close(pipefd[1]);               // Close unused write end of pipe
                         close(pipefd[0]);               // Close read end of pipe after dup2
-                        handle_execvp_errors_in_child(r_args);
+                        execvp(r_args[0], r_args);
+                        perror("execvp failed");
+                        exit(127);  // Exit with error code 127 if execvp fails
                     }
                 }
             }
@@ -1058,7 +1035,6 @@ unsigned long long parse_value_with_unit(const char *str) {
     return (unsigned long long)value;
 }
 
-// Update the check_rsc_lmt function to modify the current process limits
 char **check_rsc_lmt(char **argu) {
     if (!argu || !argu[0]) return NULL;
 
@@ -1071,7 +1047,7 @@ char **check_rsc_lmt(char **argu) {
         if (!strchr(argu[i], '=')) break;
 
         char resource[MAX_INPUT_LENGTHH];
-        char soft_str[MAX_INPUT_LENGTHH], hard_str[MAX_INPUT_LENGTH];
+        char soft_str[MAX_INPUT_LENGTHH], hard_str[MAX_INPUT_LENGTH] ;
 
         if (sscanf(argu[i], "%[^=]=%[^:]:%s", resource, soft_str, hard_str) < 2) {
             printf("ERR_FORMAT in: %s\n", argu[i]);
@@ -1087,20 +1063,13 @@ char **check_rsc_lmt(char **argu) {
             return NULL;
         }
 
-        // Set the resource limit and explicitly set SIGXCPU to default action
         struct rlimit lim = { .rlim_cur = soft, .rlim_max = hard };
         if (setrlimit(rtype, &lim) != 0) {
             perror("setrlimit");
             return NULL;
         }
 
-        // For CPU limit, make sure we install the default signal handler
-        if (rtype == RLIMIT_CPU) {
-            signal(SIGXCPU, sigxcpu_handler); // Set default handler which will terminate the process
-        }
-
-        printf("✓ Resource %-8s → soft: %llu, hard: %llu\n", resource,
-               (unsigned long long)soft, (unsigned long long)hard);
+        printf("✓ Resource %-8s → soft: %llu, hard: %llu\n", resource, (unsigned long long)soft, (unsigned long long)hard);
     }
 
     // Create a new array for the remaining arguments

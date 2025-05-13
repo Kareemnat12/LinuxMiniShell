@@ -21,7 +21,7 @@
 
 /**************************** CONSTANTS ****************************/
 const int MAX_INPUT_LENGTH = 1024;   // Maximum length for user input
-const int MAX_ARGC = 6;              // Maximum number of command arguments allowed
+const int MAX_ARGC = 15;              // Maximum number of command arguments allowed
 const char delim[] = " ";            // Delimiter for splitting command strings
 #define MAX_INPUT_LENGTHH 1025       // Fixed buffer size for input
 
@@ -847,10 +847,17 @@ int main(int argc, char* argv[]) {
         }
 
         // Check if command has background flag
-        if (l_args_len > 0 && strcmp(l_args[l_args_len-1], "&") == 0) {
+        if (l_args_len > 0 && strcmp(l_args[l_args_len - 1], "&") == 0) {
             background_flag = 1;
-            l_args[l_args_len-1] = NULL; // Remove the background flag from arguments
+            l_args[l_args_len - 1] = NULL; // Remove "&"
+            l_args_len--;                  // Decrease arg count
         }
+
+
+
+
+
+
 
         // Handle the exit command
         if (strcmp(l_args[0], "done") == 0) {
@@ -889,6 +896,7 @@ int main(int argc, char* argv[]) {
         if (left_pid == 0) {
             // Child process for left command
             if (pip_flag == 0) {
+
                 // No pipe, just execute the command
                 execvp(l_args[0], l_args);
                 perror("execvp failed");
@@ -971,4 +979,21 @@ int main(int argc, char* argv[]) {
         l_args = NULL;
         r_args = NULL;
     }
+}
+
+
+void check_rsc_lmt(char **argu){
+    if(strcmp(argu[0],"rlimit")==0){
+        if(strcmp(argu[1],"set")==0){
+
+
+        }
+
+        else if (strcmp(argu[1],"show")==0){
+
+        }
+        return;}
+
+
+return;
 }

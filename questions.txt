@@ -17,3 +17,16 @@ dose the 2> file append in the run ? or it ovverite in every error ?
 
 
 dose we use my_tee only after pipe? or it might be used in left command
+
+
+for instance if we put wrong command the error will be shown twice
+
+
+ ithink every command and its args thus the command line limit of args only works when i have command
+
+can done be after pipe ?
+
+
+    char *args[] = {"rlimit", "set", "cpu=2:4", "mem=20", "nofile=3:4","echo ", "hello","2>", NULL};
+
+HARD LIMIT AND SOFT LIMIT DEBUG TODO

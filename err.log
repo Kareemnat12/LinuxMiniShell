@@ -1,1 +1,2 @@
-execvp failed: No such file or directory
+[DEBUG] check_rsc_lmt called with command: ls
+[DEBUG] Not a rlimit command, passing through

@@ -1,9 +1,11 @@
 /**
- * Advanced Shell Implementation with Error Redirection
+ * Advanced Shell Implementation with Error Redirection and Resource Limits
  *
  * This shell supports:
  * - Command execution with pipes
  * - Error redirection with 2> operator
+ * - Resource limits management (CPU, memory, file size, nofile, nproc)
+ * - Resource limits display with rlimit show
  * - Custom commands
  * - Tracking of dangerous commands
  * - Performance statistics
@@ -25,7 +27,7 @@
 
 /**************************** CONSTANTS ****************************/
 const int MAX_INPUT_LENGTH = 1024;   // Maximum length for user input
-const int MAX_ARGC = 45;              // Maximum number of command arguments allowed
+const int MAX_ARGC = 7;              // Maximum number of command arguments allowed
 const char delim[] = " ";            // Delimiter for splitting command strings
 #define MAX_INPUT_LENGTHH 1025       // Fixed buffer size for input
 
@@ -48,18 +50,32 @@ int is_dangerous_command(char **user_args, int user_args_len);
 float time_diff(struct timespec start, struct timespec end);
 void update_min_max_time(double current_time, double *min_time, double *max_time);
 void prompt(void);
-void check_append_flag(const char *userInput, int *append_flg);
+void check_append_flag(char **args, int args_len, int *append_flg);
 void redirect_stderr_to_file(const char *filename);
 void check_and_redirect_stderr(char **l_args);
-void sigchld_handler(int sig);
-void handle_execvp_errors_in_child(char **args);
 
+// Signal handlers
+void sigchld_handler(int sig);
+void sigxcpu_handler(int sig);
+void sigxfsz_handler(int sig);
+
+// Resource limiting
+int get_resource_type(const char *res_name);
+unsigned long long parse_value_with_unit(const char *str);
+char **check_rsc_lmt(char **argu, int *args_len);
+void show_resource_limit(const char *name, int resource_type);
+void show_all_resource_limits(void);
+
+// Error handling
+void handle_execvp_errors_in_child(char **args);
+void* safe_malloc(size_t size);
+void restore_stderr(void);
 // Custom commands
 int my_tee_handler(void);
 
 // Debug helpers
 void print_array(const char **array, int size);
-void sigxcpu_handler(int sig);
+
 /********************** CUSTOM COMMANDS STRUCTURE **********************/
 typedef struct {
     const char *name;          // Command name
@@ -71,8 +87,8 @@ typedef struct {
 
 // Define custom commands table
 CustomCommand custom_commands[] = {
-        {"my_tee", my_tee_handler, 1, 1, 1}, // my_tee requires pipe, supports append, needs at least 1 arg for output file
-        {NULL, NULL, 0, 0, 0}                // Terminator
+    {"my_tee", my_tee_handler, 1, 1, 1}, // my_tee requires pipe, supports append, needs at least 1 arg for output file
+    {NULL, NULL, 0, 0, 0}                // Terminator
 };
 
 /********************** GLOBAL VARIABLES **********************/
@@ -105,17 +121,28 @@ int left_status;              // Exit status of left command
 int right_status;             // Exit status of right command
 char userInput[MAX_INPUT_LENGTHH]; // Buffer for user input
 int background_flag = 0;      // Flag for background execution
-char **check_rsc_lmt(char **argu);
-unsigned long long parse_value_with_unit(const char *str);
-int get_resource_type(const char *res_name);
-
+char current_command[MAX_INPUT_LENGTHH]; // Current command string for logging
+const char *output_file = NULL;  // Path to output log file
+int original_stderr_fd = -1;
+int stderr_redirected = 0;
+/**
+ * Safe memory allocation with error handling
+ */
+void* safe_malloc(size_t size) {
+    void* ptr = malloc(size);
+    if (ptr == NULL) {
+        fprintf(stderr, "Memory allocation failed!\n");
+        exit(1);
+    }
+    return ptr;
+}
 
 /**
  * Error handling function for child processes when exec fails
  */
 void handle_execvp_errors_in_child(char **args) {
     if (!args || !args[0]) {
-        fprintf(stderr, "Empty command\n");
+        fprintf(stderr, "ERR\n");
         exit(1);
     }
 
@@ -125,17 +152,30 @@ void handle_execvp_errors_in_child(char **args) {
     // If execvp returns, there was an error
     if (errno == EMFILE) {
         fprintf(stderr, "Too many open files!\n");
+    } else if (errno == ENOMEM) {
+        fprintf(stderr, "Memory allocation failed!\n"); 
     } else {
         perror("exec failed");
     }
     exit(127);  // Standard exit code for command not found/exec error
 }
 
-
+/**
+ * Handler for SIGXCPU signal (CPU time limit exceeded)
+ */
 void sigxcpu_handler(int sig) {
-    printf("Process exceeded CPU time limit (SIGXCPU received).\n");
+    fprintf(stderr, "CPU time limit exceeded!\n");
     exit(1); // Ensure the process terminates
 }
+
+/**
+ * Handler for SIGXFSZ signal (File size limit exceeded)
+ */
+void sigxfsz_handler(int sig) {
+    fprintf(stderr, "File size limit exceeded!\n");
+    exit(1); // Ensure the process terminates
+}
+
 /********************** HELPER FUNCTIONS **********************/
 /**
  * Find a custom command by name
@@ -185,12 +225,13 @@ void sigchld_handler(int sig) {
     if (cmd_succeeded) {
         clock_gettime(CLOCK_MONOTONIC, &end);
         float total_time = time_diff(start, end);
+    last_cmd_time = total_time;
+    total_time_all += total_time;
+    average_time = total_time_all / total_cmd_count;
+    update_min_max_time(total_time, &min_time, &max_time);
 
-        last_cmd_time = total_time;
-        total_time_all += total_time;
         total_cmd_count += 1;
-        average_time = total_time_all / total_cmd_count;
-        update_min_max_time(total_time, &min_time, &max_time);
+        append_to_log(output_file, current_command, total_time);
     } else {
         // Check for signal termination
         if (pip_flag) {
@@ -224,6 +265,11 @@ void sigchld_handler(int sig) {
  * Opens the specified file and redirects STDERR_FILENO to it
  */
 void redirect_stderr_to_file(const char *filename) {
+    // Save original stderr if we haven't already
+    if (original_stderr_fd == -1) {
+        original_stderr_fd = dup(STDERR_FILENO);
+    }
+
     int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd < 0) {
         perror("open for stderr redirection");
@@ -237,23 +283,38 @@ void redirect_stderr_to_file(const char *filename) {
     }
 
     close(fd);
+    stderr_redirected = 1;
 }
 
+
+
+void restore_stderr(void) {
+    if (stderr_redirected && original_stderr_fd != -1) {
+        dup2(original_stderr_fd, STDERR_FILENO);
+        close(original_stderr_fd);
+        original_stderr_fd = -1;
+        stderr_redirected = 0;
+    }
+}
 /**
  * Check command arguments for 2> redirection and handle it
  * Searches for the 2> operator and redirects stderr if found
  */
-void check_and_redirect_stderr(char **l_args) {
-    if (!l_args) return;
+void check_and_redirect_stderr(char **args) {
+    if (!args) return;
 
-    for (int i = 0; l_args[i] != NULL; i++) {
-        if (strcmp(l_args[i], "2>") == 0 && l_args[i+1] != NULL) {
+    for (int i = 0; args[i] != NULL; i++) {
+        if (strcmp(args[i], "2>") == 0 && args[i+1] != NULL) {
             // Redirect stderr to file
-            redirect_stderr_to_file(l_args[i+1]);
+            redirect_stderr_to_file(args[i+1]);
 
-            // Null out the redirection tokens to clean the args
-            l_args[i] = NULL;
-            l_args[i+1] = NULL;
+            // Remove the redirection operator and filename from arguments
+            // by shifting all subsequent arguments left
+            int j;
+            for (j = i; args[j+2] != NULL; j++) {
+                args[j] = args[j+2];
+            }
+            args[j] = NULL; // Properly terminate the array
             break;
         }
     }
@@ -262,8 +323,19 @@ void check_and_redirect_stderr(char **l_args) {
 /**
  * Check if the input contains the -a (append) flag
  */
-void check_append_flag(const char *userInput, int *append_flg) {
-    *append_flg = (strstr(userInput, "-a") != NULL) ? 1 : 0;
+void check_append_flag(char **args, int args_len, int *flg) {
+    // Initialize flag to 0
+    *flg = 0;
+
+    if (args == NULL) return;
+
+    // Check each argument for exact match with "-a"
+    for (int i = 0; i < args_len && args[i]; i++) {
+        if (strcmp(args[i], "-a") == 0) {
+            *flg = 1;
+            break;
+        }
+    }
 }
 
 /**
@@ -293,6 +365,378 @@ void write_to_file(const char *filename, const char *content, int append) {
     close(fd);
 }
 
+/********************** RESOURCE MANAGEMENT FUNCTIONS **********************/
+/**
+ * Get the resource ID for a named resource
+ */
+int get_resource_type(const char *res_name) {
+    if (strcmp(res_name, "cpu") == 0) return RLIMIT_CPU;
+    if (strcmp(res_name, "fsize") == 0) return RLIMIT_FSIZE;
+    if (strcmp(res_name, "as") == 0 || strcmp(res_name, "mem") == 0) return RLIMIT_AS;
+    if (strcmp(res_name, "nofile") == 0) return RLIMIT_NOFILE;
+    if (strcmp(res_name, "nproc") == 0) return RLIMIT_NPROC;
+    return -1;
+}
+
+/**
+ * Display a resource limit in a human-readable format
+ */
+void show_resource_limit(const char *name, int resource_type) {
+    struct rlimit limit;
+    if (getrlimit(resource_type, &limit) != 0) {
+        perror("getrlimit");
+        return;
+    }
+    
+    const char* res_name;
+    if (resource_type == RLIMIT_CPU) res_name = "CPU time";
+    else if (resource_type == RLIMIT_AS) res_name = "Memory";
+    else if (resource_type == RLIMIT_FSIZE) res_name = "File size";
+    else if (resource_type == RLIMIT_NOFILE) res_name = "Open files";
+    else if (resource_type == RLIMIT_NPROC) res_name = "Process count";
+    else res_name = name;
+    
+    printf("%s: ", res_name);
+    
+    // Format soft limit
+    if (limit.rlim_cur == RLIM_INFINITY) {
+        printf("soft=unlimited, ");
+    } else {
+        if (resource_type == RLIMIT_CPU) {
+            printf("soft=%lus, ", (unsigned long)limit.rlim_cur);
+        } else if (resource_type == RLIMIT_AS || resource_type == RLIMIT_FSIZE) {
+            // Format memory-related resources in human-readable form
+            if (limit.rlim_cur >= 1024*1024*1024) {
+                printf("soft=%.1fG, ", (double)limit.rlim_cur / (1024*1024*1024));
+            } else if (limit.rlim_cur >= 1024*1024) {
+                printf("soft=%.1fM, ", (double)limit.rlim_cur / (1024*1024));
+            } else if (limit.rlim_cur >= 1024) {
+                printf("soft=%.1fK, ", (double)limit.rlim_cur / 1024);
+            } else {
+                printf("soft=%luB, ", (unsigned long)limit.rlim_cur);
+            }
+        } else {
+            printf("soft=%lu, ", (unsigned long)limit.rlim_cur);
+        }
+    }
+    
+    // Format hard limit
+    if (limit.rlim_max == RLIM_INFINITY) {
+        printf("hard=unlimited\n");
+    } else {
+        if (resource_type == RLIMIT_CPU) {
+            printf("hard=%lus\n", (unsigned long)limit.rlim_max);
+        } else if (resource_type == RLIMIT_AS || resource_type == RLIMIT_FSIZE) {
+            // Format memory-related resources in human-readable form
+            if (limit.rlim_max >= 1024*1024*1024) {
+                printf("hard=%.1fG\n", (double)limit.rlim_max / (1024*1024*1024));
+            } else if (limit.rlim_max >= 1024*1024) {
+                printf("hard=%.1fM\n", (double)limit.rlim_max / (1024*1024));
+            } else if (limit.rlim_max >= 1024) {
+                printf("hard=%.1fK\n", (double)limit.rlim_max / 1024);
+            } else {
+                printf("hard=%luB\n", (unsigned long)limit.rlim_max);
+            }
+        } else {
+            printf("hard=%lu\n", (unsigned long)limit.rlim_max);
+        }
+    }
+}
+
+/**
+ * Show all resource limits
+ */
+void show_all_resource_limits(void) {
+    show_resource_limit("cpu", RLIMIT_CPU);
+    show_resource_limit("mem", RLIMIT_AS);
+    show_resource_limit("fsize", RLIMIT_FSIZE);
+    show_resource_limit("nofile", RLIMIT_NOFILE);
+    show_resource_limit("nproc", RLIMIT_NPROC);
+}
+
+/**
+ * Parse a value with optional unit (B, K/KB, M/MB, G/GB)
+ * Returns the value in bytes
+ */
+unsigned long long parse_value_with_unit(const char *str) {
+    char *endptr;
+    double value = strtod(str, &endptr);
+    while (isspace(*endptr)) endptr++;
+
+    if (*endptr == '\0') return (unsigned long long)value;
+    if (strcasecmp(endptr, "B") == 0) return (unsigned long long)(value);
+    if (strcasecmp(endptr, "K") == 0 || strcasecmp(endptr, "KB") == 0)
+        return (unsigned long long)(value * 1024);
+    if (strcasecmp(endptr, "M") == 0 || strcasecmp(endptr, "MB") == 0)
+        return (unsigned long long)(value * 1024 * 1024);
+    if (strcasecmp(endptr, "G") == 0 || strcasecmp(endptr, "GB") == 0)
+        return (unsigned long long)(value * 1024 * 1024 * 1024);
+
+    fprintf(stderr, "Unknown unit: %s\n", endptr);
+    return (unsigned long long)value;
+}
+
+/**
+ * Check and apply resource limits specified in command arguments
+ * Also handles the rlimit show command
+ */
+ /*
+char **check_rsc_lmt(char **argu) {
+    if (!argu || !argu[0]) return NULL;
+
+    if (strcmp(argu[0], "rlimit") != 0) {
+        return argu;  // Not a rlimit command at all
+    }
+
+    // Handle 'rlimit show' command
+    if (argu[1] && strcmp(argu[1], "show") == 0) {
+        if (argu[2] == NULL) {
+            // Show all resource limits when no specific resource is mentioned
+            show_all_resource_limits();
+        } else {
+            // Show limit for a specific resource
+            int rtype = get_resource_type(argu[2]);
+            if (rtype == -1) {
+                printf("ERR_RESOURCE: Unknown resource '%s'\n", argu[2]);
+            } else {
+                show_resource_limit(argu[2], rtype);
+            }
+        }
+
+        // Return empty command array to indicate we've handled the command
+        char **empty_cmd = safe_malloc(sizeof(char*));
+        empty_cmd[0] = NULL;
+        return empty_cmd;
+    }
+
+    // Handle 'rlimit set' command
+    if (!argu[1] || strcmp(argu[1], "set") != 0) {
+        printf("ERR: Unknown rlimit command. Use 'rlimit set' or 'rlimit show'\n");
+        return NULL;
+    }
+
+    // Set up signal handlers for resource limit violations
+    signal(SIGXCPU, sigxcpu_handler);  // CPU time limit
+    signal(SIGXFSZ, sigxfsz_handler);  // File size limit
+
+    // Allocate new_args array here to avoid potential memory leak
+    char **new_args = NULL;
+    int i = 2;
+
+    for (; argu[i]; i++) {
+        if (!strchr(argu[i], '=')) break;
+
+        char resource[MAX_INPUT_LENGTH];
+        char soft_str[MAX_INPUT_LENGTH], hard_str[MAX_INPUT_LENGTH];
+
+        // Initialize hard_str to empty to handle the case when only soft limit is provided
+        hard_str[0] = '\0';
+
+        if (sscanf(argu[i], "%[^=]=%[^:]:%s", resource, soft_str, hard_str) < 2) {
+            printf("ERR_FORMAT in: %s\n", argu[i]);
+            return NULL;
+        }
+
+        rlim_t soft = parse_value_with_unit(soft_str);
+        rlim_t hard = strlen(hard_str) ? parse_value_with_unit(hard_str) : soft;
+
+        int rtype = get_resource_type(resource);
+        if (rtype == -1) {
+            printf("ERR_RESOURCE in: %s\n", resource);
+            return NULL;
+        }
+
+        // Set the resource limit
+        struct rlimit lim = { .rlim_cur = soft, .rlim_max = hard };
+        if (setrlimit(rtype, &lim) != 0) {
+            // Specific error handling based on errno
+            switch (errno) {
+                case EPERM:
+                    printf("ERR: Permission denied setting %s limit\n", resource);
+                    break;
+                case EINVAL:
+                    printf("ERR: Invalid value for %s limit\n", resource);
+                    break;
+                default:
+                    perror("setrlimit");
+            }
+            return NULL;
+        }
+
+        // Print confirmation with appropriate units based on the resource type
+        const char* unit = "";
+        unsigned long long soft_display = soft;
+        unsigned long long hard_display = hard;
+
+        if (rtype == RLIMIT_FSIZE || rtype == RLIMIT_AS) {
+            // Display memory/file sizes in human-readable format
+            if (soft >= 1024*1024*1024) {
+                soft_display = soft / (1024*1024*1024);
+                unit = "GB";
+            } else if (soft >= 1024*1024) {
+                soft_display = soft / (1024*1024);
+                unit = "MB";
+            } else if (soft >= 1024) {
+                soft_display = soft / 1024;
+                unit = "KB";
+            } else {
+                unit = "B";
+            }
+
+            printf("✓ Resource %-8s → soft: %llu %s, hard: ",
+                   resource, soft_display, unit);
+
+            // Handle hard limit display with appropriate units
+            if (hard >= 1024*1024*1024) {
+                hard_display = hard / (1024*1024*1024);
+                unit = "GB";
+            } else if (hard >= 1024*1024) {
+                hard_display = hard / (1024*1024);
+                unit = "MB";
+            } else if (hard >= 1024) {
+                hard_display = hard / 1024;
+                unit = "KB";
+            } else {
+                unit = "B";
+            }
+            printf("%llu %s\n", hard_display, unit);
+        } else if (rtype == RLIMIT_CPU) {
+            // CPU time is displayed in seconds
+            printf("✓ Resource %-8s → soft: %llu sec, hard: %llu sec\n",
+                   resource, soft_display, hard_display);
+        } else {
+            // Other resources like nofile/nproc don't need special unit handling
+            printf("✓ Resource %-8s → soft: %llu, hard: %llu\n",
+                   resource, soft_display, hard_display);
+        }
+    }
+
+    // Create a new array for the remaining arguments
+    new_args = safe_malloc((i + 1) * sizeof(char *));
+
+    int j = 0;
+    for (; argu[i]; i++, j++) {
+        new_args[j] = argu[i];
+    }
+    new_args[j] = NULL;  // Null-terminate the array
+    return new_args;  // Return the new array with the remaining arguments
+}
+*/
+ char **check_rsc_lmt(char **argu, int *args_len) {
+     // Basic validation
+     if (!argu || !argu[0]) {
+         fprintf(stderr, "[DEBUG] check_rsc_lmt: NULL or empty arguments\n");
+         return NULL;
+     }
+
+     fprintf(stderr, "[DEBUG] check_rsc_lmt called with command: %s\n", argu[0]);
+
+     // Check if this is a rlimit command
+     if (strcmp(argu[0], "rlimit") != 0) {
+         fprintf(stderr, "[DEBUG] Not a rlimit command, passing through\n");
+         return argu;  // Not a rlimit command
+     }
+
+     // Handle 'rlimit show' command
+     if (argu[1] && strcmp(argu[1], "show") == 0) {
+         fprintf(stderr, "[DEBUG] Processing 'rlimit show' command\n");
+         show_all_resource_limits();
+         return NULL;
+     }
+
+     // Handle 'rlimit set' command
+     if (!argu[1] || strcmp(argu[1], "set") != 0) {
+         fprintf(stderr, "[DEBUG] Unknown rlimit subcommand: %s\n", argu[1] ? argu[1] : "NULL");
+         return NULL;
+     }
+
+     fprintf(stderr, "[DEBUG] Processing 'rlimit set' command\n");
+
+     // Process resource limit settings
+     int i = 2;
+     for (; argu[i]; i++) {
+         if (!strchr(argu[i], '=')) break;
+
+         fprintf(stderr, "[DEBUG] Processing limit: %s\n", argu[i]);
+
+         char resource[MAX_INPUT_LENGTH];
+         char soft_str[MAX_INPUT_LENGTHH], hard_str[MAX_INPUT_LENGTHH] = "";
+
+         if (sscanf(argu[i], "%[^=]=%[^:]:%s", resource, soft_str, hard_str) < 2) {
+             fprintf(stderr, "[DEBUG] Format error in: %s\n", argu[i]);
+             return NULL;
+         }
+
+         rlim_t soft = parse_value_with_unit(soft_str);
+         rlim_t hard = strlen(hard_str) ? parse_value_with_unit(hard_str) : soft;
+
+         fprintf(stderr, "[DEBUG] Resource: %s, soft: %llu, hard: %llu\n",
+                 resource, (unsigned long long)soft, (unsigned long long)hard);
+
+         int rtype = get_resource_type(resource);
+         if (rtype == -1) {
+             fprintf(stderr, "[DEBUG] Unknown resource: %s\n", resource);
+             return NULL;
+         }
+
+         // Set the new limit
+         struct rlimit lim = { .rlim_cur = soft, .rlim_max = hard };
+         if (setrlimit(rtype, &lim) != 0) {
+             fprintf(stderr, "[DEBUG] setrlimit failed for %s: %s (errno: %d)\n",
+                     resource, strerror(errno), errno);
+             return NULL;
+         }
+
+         // For CPU limits, make sure to install signal handler
+         if (rtype == RLIMIT_CPU) {
+             fprintf(stderr, "[DEBUG] Installing SIGXCPU handler for CPU limit\n");
+             struct sigaction sa;
+             sa.sa_handler = sigxcpu_handler;
+             sigemptyset(&sa.sa_mask);
+             sa.sa_flags = 0;
+             if (sigaction(SIGXCPU, &sa, NULL) != 0) {
+                 fprintf(stderr, "[DEBUG] Failed to set SIGXCPU handler: %s\n", strerror(errno));
+             } else {
+                 fprintf(stderr, "[DEBUG] SIGXCPU handler installed successfully\n");
+             }
+         }
+     }
+
+     // Create new args array
+     fprintf(stderr, "[DEBUG] Creating new args array, starting at index %d\n", i);
+     if (!argu[i]) {
+         fprintf(stderr, "[DEBUG] No command after rlimit set\n");
+         return NULL;
+     }
+
+     // Count remaining arguments
+     int remaining_args = 0;
+     for (int j = i; argu[j] != NULL; j++) {
+         remaining_args++;
+     }
+
+     // Update the args length
+     if (args_len) {
+         *args_len = remaining_args;
+         fprintf(stderr, "[DEBUG] Updating args_len to %d\n", remaining_args);
+     }
+
+     char **new_args = malloc((remaining_args + 1) * sizeof(char *));
+     if (!new_args) {
+         fprintf(stderr, "[DEBUG] malloc failed for new args\n");
+         return NULL;
+     }
+
+     int j = 0;
+     for (; argu[i]; i++, j++) {
+         new_args[j] = argu[i];
+         fprintf(stderr, "[DEBUG] Added arg[%d]: %s\n", j, argu[i]);
+     }
+     new_args[j] = NULL;
+
+     fprintf(stderr, "[DEBUG] Returning new args array with %d elements\n", remaining_args);
+     return new_args;
+ }
 /********************** CUSTOM COMMAND IMPLEMENTATIONS **********************/
 /**
  * Implementation of my_tee command handler
@@ -305,8 +749,8 @@ int my_tee_handler(void) {
 
     // Buffer for reading from pipe
     int bytes;
-    char buffer[MAX_INPUT_LENGTH];
-    char result[MAX_INPUT_LENGTH]; // Initialize result buffer
+    char buffer[MAX_INPUT_LENGTHH];
+    char result[MAX_INPUT_LENGTHH]; // Initialize result buffer
     result[0] = '\0';             // Initialize as empty string
 
     // Read all data from pipe
@@ -377,7 +821,7 @@ char **split_to_args(const char *string, const char *delimiter, int *count) {
     // Make a copy to avoid modifying the original string
     char *input_copy = strdup(string);
     if (!input_copy) {
-        perror("Failed to allocate memory");
+        fprintf(stderr, "Memory allocation failed!\n");
         exit(1);
     }
 
@@ -390,7 +834,7 @@ char **split_to_args(const char *string, const char *delimiter, int *count) {
         // Expand the arguments array to hold another string + null terminator
         char **temp = realloc(argf, (*count + 2) * sizeof(char *));
         if (!temp) {
-            perror("Failed to reallocate memory");
+            fprintf(stderr, "Memory allocation failed!\n");
             free_args(argf);
             free(input_copy);
             exit(1);
@@ -400,7 +844,7 @@ char **split_to_args(const char *string, const char *delimiter, int *count) {
         // Store a copy of the token
         argf[*count] = strdup(token);
         if (!argf[*count]) {
-            perror("Failed to allocate memory for token");
+            fprintf(stderr, "Memory allocation failed!\n");
             free(input_copy);
             free_args(argf);
             exit(1);
@@ -579,13 +1023,7 @@ char** read_file_lines(const char* filename, int* num_lines) {
 
     // Start with a reasonable initial capacity
     int capacity = 64;
-    char** lines = malloc(capacity * sizeof(char*));
-    if (!lines) {
-        perror("Memory allocation failed");
-        fclose(file);
-        *num_lines = 0;
-        return NULL;
-    }
+    char** lines = safe_malloc(capacity * sizeof(char*));
 
     char buffer[MAX_INPUT_LENGTH];
     int count = 0;
@@ -597,7 +1035,7 @@ char** read_file_lines(const char* filename, int* num_lines) {
             capacity *= 2;
             char** new_lines = realloc(lines, capacity * sizeof(char*));
             if (!new_lines) {
-                perror("Memory reallocation failed");
+                fprintf(stderr, "Memory allocation failed!\n");
                 // Clean up allocated memory
                 for (int i = 0; i < count; i++) {
                     free(lines[i]);
@@ -616,7 +1054,7 @@ char** read_file_lines(const char* filename, int* num_lines) {
         // Store a copy of the line
         lines[count] = strdup(buffer);
         if (!lines[count]) {
-            perror("String duplication failed");
+            fprintf(stderr, "Memory allocation failed!\n");
             // Clean up allocated memory
             for (int i = 0; i < count; i++) {
                 free(lines[i]);
@@ -741,7 +1179,7 @@ float time_diff(struct timespec start, struct timespec end) {
  * Records each successful command and its execution time
  * for later analysis.
  */
-void append_to_log(const char *filename, char *val1, float val2) {
+void append_to_log(const char *filename, char* val1, float val2) {
     FILE *file = fopen(filename, "a");  // Open in append mode
     if (!file) {
         perror("Error opening log file");
@@ -802,7 +1240,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Setup file paths from command line arguments
-    const char *output_file = argv[2];  // Log file for command execution times
+    output_file = argv[2];  // Log file for command execution times
     const char *input_file = argv[1];   // File containing dangerous commands
     char left_cmd[MAX_INPUT_LENGTH];
     char right_cmd[MAX_INPUT_LENGTH];
@@ -821,11 +1259,13 @@ int main(int argc, char* argv[]) {
         if (clear) fclose(clear);
     }
 
+    // Set up signal handlers
+    signal(SIGCHLD, sigchld_handler);
+    signal(SIGXCPU, sigxcpu_handler);
+    signal(SIGXFSZ, sigxfsz_handler);
+
     // Main command processing loop
     while (1) {
-
-        signal(SIGCHLD, sigchld_handler);
-        signal(SIGXCPU, sigxcpu_handler);
         // Display the prompt with current statistics
         prompt();
 
@@ -837,7 +1277,7 @@ int main(int argc, char* argv[]) {
         if (userInput[0] == '\0') {
             continue;
         }
-
+        strcpy(current_command, userInput);
         // Clean up the input by removing extra whitespace
         trim_inplace(userInput);
 
@@ -862,6 +1302,44 @@ int main(int argc, char* argv[]) {
             free_args(l_args);
             free_args(r_args);
             continue;
+        }
+
+        // Check for resource limits in the parent process
+        if (l_args && l_args[0] && strcmp(l_args[0], "rlimit") == 0) {
+            char **new_cmd = check_rsc_lmt(l_args, &l_args_len);
+            if (new_cmd != NULL) {
+                free_args(l_args);
+                l_args = new_cmd;
+            } else {
+                free_args(l_args);
+                free_args(r_args);
+                l_args = NULL;
+                r_args = NULL;
+                continue;  // Skip if rlimit command was handled or invalid
+            }
+        }
+
+        // Also check right command for resource limits if we have a pipe
+        if (pip_flag && r_args && r_args[0] && strcmp(r_args[0], "rlimit") == 0) {
+            char **new_cmd = check_rsc_lmt(r_args, &r_args_len);
+            if (new_cmd != NULL) {
+                free_args(r_args);
+                r_args = new_cmd;
+            } else {
+                free_args(l_args);
+                free_args(r_args);
+                l_args = NULL;
+                r_args = NULL;
+                continue;  // Skip if rlimit command was handled or invalid
+            }
+        }
+        if(l_args_len > MAX_ARGC || r_args_len > MAX_ARGC) {
+            printf("ERR_ARGS\n");
+            free_args(l_args);
+            free_args(r_args);
+            l_args = NULL;
+            r_args = NULL;
+            continue;  // Skip if too many arguments
         }
 
         ///////////////////// COMMAND SECURITY CHECK /////////////////////
@@ -889,10 +1367,6 @@ int main(int argc, char* argv[]) {
             l_args_len--;                  // Decrease arg count
         }
 
-
-
-
-
         // Handle the exit command
         if (strcmp(l_args[0], "done") == 0) {
             free_args(l_args);
@@ -905,8 +1379,7 @@ int main(int argc, char* argv[]) {
             exit(0);
         }
 
-        // Check and handle stderr redirection
-        check_and_redirect_stderr(l_args);
+
 
         ///////////////////// COMMAND EXECUTION /////////////////////
         // Create pipe for command communication
@@ -919,7 +1392,11 @@ int main(int argc, char* argv[]) {
         const pid_t left_pid = fork();
         if (left_pid < 0) {
             // Fork failed
-            perror("Fork Failed");
+            if (errno == EAGAIN) {
+                fprintf(stderr, "Process creation limit exceeded!\n");
+            } else {
+                perror("Fork Failed");
+            }
             free_args(l_args);
             free_args(r_args);
             l_args = NULL;
@@ -928,14 +1405,24 @@ int main(int argc, char* argv[]) {
         }
 
         if (left_pid == 0) {
-            // Set up signal handler in the child process before exec
-            struct sigaction sa;
-            sa.sa_handler = sigxcpu_handler;
-            sigemptyset(&sa.sa_mask);
-            sa.sa_flags = 0;
-            sigaction(SIGXCPU, &sa, NULL);
+            check_and_redirect_stderr(l_args);
 
-            char **cmd = check_rsc_lmt(l_args);  // Check for resource limits
+            // Set up signal handlers in the child process
+//            struct sigaction sa;
+//
+//            // CPU limit handler
+//            sa.sa_handler = sigxcpu_handler;
+//            sigemptyset(&sa.sa_mask);
+//            sa.sa_flags = 0;
+//            sigaction(SIGXCPU, &sa, NULL);
+//
+//            // File size limit handler
+//            sa.sa_handler = sigxfsz_handler;
+//            sigemptyset(&sa.sa_mask);
+//            sa.sa_flags = 0;
+//            sigaction(SIGXFSZ, &sa, NULL);
+
+            char **cmd = check_rsc_lmt(l_args,&l_args_len);  // Check for resource limits
             if (cmd != NULL) {
                 l_args = cmd;
             }
@@ -947,7 +1434,15 @@ int main(int argc, char* argv[]) {
             }
 
             // Set up pipe for output redirection
-            dup2(pipefd[1], STDOUT_FILENO);  // Redirect stdout to write end of pipe
+            if (dup2(pipefd[1], STDOUT_FILENO) < 0) {
+                if (errno == EMFILE) {
+                    fprintf(stderr, "Too many open files!\n");
+                    exit(1);
+                }
+                perror("dup2");
+                exit(1);
+            }
+            
             close(pipefd[0]);                // Close unused read end of pipe
             close(pipefd[1]);                // Close write end of pipe after dup2
             handle_execvp_errors_in_child(l_args);
@@ -955,7 +1450,7 @@ int main(int argc, char* argv[]) {
 
         // Execute right command if pipe exists
         if (pip_flag) {
-            check_append_flag(userInput, &append_flg);
+            check_append_flag(r_args,r_args_len, &append_flg);
 
             // Check if right command is a custom command
             if (r_args && r_args[0]) {
@@ -975,7 +1470,11 @@ int main(int argc, char* argv[]) {
                     right_pid = fork();
                     if (right_pid < 0) {
                         // Fork failed
-                        perror("Fork Failed");
+                        if (errno == EAGAIN) {
+                            fprintf(stderr, "Process creation limit exceeded!\n");
+                        } else {
+                            perror("Fork Failed");
+                        }
                         free_args(l_args);
                         free_args(r_args);
                         l_args = NULL;
@@ -984,19 +1483,35 @@ int main(int argc, char* argv[]) {
                     }
 
                     if (right_pid == 0) {
-                        // Set up signal handler in the child process before exec
-                        struct sigaction sa;
-                        sa.sa_handler = sigxcpu_handler;
-                        sigemptyset(&sa.sa_mask);
-                        sa.sa_flags = 0;
-                        sigaction(SIGXCPU, &sa, NULL);
+                        // Set up signal handlers in the child process
+//                        struct sigaction sa;
+//
+//                        // CPU limit handler
+//                        sa.sa_handler = sigxcpu_handler;
+//                        sigemptyset(&sa.sa_mask);
+//                        sa.sa_flags = 0;
+//                        sigaction(SIGXCPU, &sa, NULL);
+//
+//                        // File size limit handler
+//                        sa.sa_handler = sigxfsz_handler;
+//                        sigemptyset(&sa.sa_mask);
+//                        sa.sa_flags = 0;
+//                        sigaction(SIGXFSZ, &sa, NULL);
 
-                        char **cmd2 = check_rsc_lmt(r_args);  // Check for resource limits
+                        char **cmd2 = check_rsc_lmt(r_args,&r_args_len);  // Check for resource limits
                         if (cmd2 != NULL) {
                             r_args = cmd2;
                         }
                         // Child process for right command
-                        dup2(pipefd[0], STDIN_FILENO);  // Redirect stdin to read end of pipe
+                        if (dup2(pipefd[0], STDIN_FILENO) < 0) {
+                            if (errno == EMFILE) {
+                                fprintf(stderr, "Too many open files!\n");
+                                exit(1);
+                            }
+                            perror("dup2");
+                            exit(1);
+                        }
+                        
                         close(pipefd[1]);               // Close unused write end of pipe
                         close(pipefd[0]);               // Close read end of pipe after dup2
                         handle_execvp_errors_in_child(r_args);
@@ -1029,92 +1544,4 @@ int main(int argc, char* argv[]) {
         l_args = NULL;
         r_args = NULL;
     }
-}
-
-
-int get_resource_type(const char *res_name) {
-    if (strcmp(res_name, "cpu") == 0) return RLIMIT_CPU;
-    if (strcmp(res_name, "fsize") == 0) return RLIMIT_FSIZE;
-    if (strcmp(res_name, "as") == 0 || strcmp(res_name, "mem") == 0) return RLIMIT_AS;
-    if (strcmp(res_name, "nofile") == 0) return RLIMIT_NOFILE;
-    return -1;
-}
-
-unsigned long long parse_value_with_unit(const char *str) {
-    char *endptr;
-    double value = strtod(str, &endptr);
-    while (isspace(*endptr)) endptr++;
-
-    if (*endptr == '\0') return (unsigned long long)value;
-    if (strcasecmp(endptr, "B") == 0) return (unsigned long long)(value);
-    if (strcasecmp(endptr, "K") == 0 || strcasecmp(endptr, "KB") == 0)
-        return (unsigned long long)(value * 1024);
-    if (strcasecmp(endptr, "M") == 0 || strcasecmp(endptr, "MB") == 0)
-        return (unsigned long long)(value * 1024 * 1024);
-    if (strcasecmp(endptr, "G") == 0 || strcasecmp(endptr, "GB") == 0)
-        return (unsigned long long)(value * 1024 * 1024 * 1024);
-
-    fprintf(stderr, "Unknown unit: %s\n", endptr);
-    return (unsigned long long)value;
-}
-
-// Update the check_rsc_lmt function to modify the current process limits
-char **check_rsc_lmt(char **argu) {
-    if (!argu || !argu[0]) return NULL;
-
-    if (strcmp(argu[0], "rlimit") != 0 || !argu[1] || strcmp(argu[1], "set") != 0) {
-        return argu;  // Not a rlimit set command → return args unchanged
-    }
-
-    int i = 2;
-    for (; argu[i]; i++) {
-        if (!strchr(argu[i], '=')) break;
-
-        char resource[MAX_INPUT_LENGTHH];
-        char soft_str[MAX_INPUT_LENGTHH], hard_str[MAX_INPUT_LENGTH];
-
-        if (sscanf(argu[i], "%[^=]=%[^:]:%s", resource, soft_str, hard_str) < 2) {
-            printf("ERR_FORMAT in: %s\n", argu[i]);
-            return NULL;
-        }
-
-        rlim_t soft = parse_value_with_unit(soft_str);
-        rlim_t hard = strlen(hard_str) ? parse_value_with_unit(hard_str) : soft;
-
-        int rtype = get_resource_type(resource);
-        if (rtype == -1) {
-            printf("ERR_RESOURCE in: %s\n", resource);
-            return NULL;
-        }
-
-        // Set the resource limit and explicitly set SIGXCPU to default action
-        struct rlimit lim = { .rlim_cur = soft, .rlim_max = hard };
-        if (setrlimit(rtype, &lim) != 0) {
-            perror("setrlimit");
-            return NULL;
-        }
-
-        // For CPU limit, make sure we install the default signal handler
-        if (rtype == RLIMIT_CPU) {
-            signal(SIGXCPU, sigxcpu_handler); // Set default handler which will terminate the process
-        }
-
-        printf("✓ Resource %-8s → soft: %llu, hard: %llu\n", resource,
-               (unsigned long long)soft, (unsigned long long)hard);
-    }
-
-    // Create a new array for the remaining arguments
-    char **new_args = malloc((i + 1) * sizeof(char *));
-    if (!new_args) {
-        perror("malloc failed");
-        return NULL;
-    }
-
-    int j = 0;
-    for (; argu[i]; i++, j++) {
-        new_args[j] = argu[i];
-    }
-    new_args[j] = NULL;  // Null-terminate the array
-
-    return new_args;  // Return the new array with the remaining arguments
 }

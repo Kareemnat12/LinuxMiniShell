@@ -1,0 +1,17 @@
+echo hello | tr a-z A-Z : 0.00106 sec
+echo hello | tr a-z A-Z : 0.00375 sec
+echo hey there | : 0.00107 sec
+echo hey there | : 0.00087 sec
+| tr a-z A-Z : 4.42730 sec
+| tr a-z A-Z : 29.17155 sec
+echo hello || tr a-z A-Z : 0.00121 sec
+echo "" | grep hi : 0.00099 sec
+echo "" | grep hi : 0.00278 sec
+sleep 1 | echo done : 0.00131 sec
+sleep 1 | echo done : 1.08255 sec
+sleep 1 | echo done : 0.00104 sec
+sleep 1 | echo done : 1.00569 sec
+false | echo should run : 0.00106 sec
+true : 0.00409 sec
+true : 0.00093 sec
+true : 0.00095 sec
