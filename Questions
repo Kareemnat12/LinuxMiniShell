@@ -1,0 +1,205 @@
+Dont forget to correct the statistics stuff mesurements and include them for waits stuff
+
+
+dose the | must be with one space or it can be without space?
+
+
+dont forget to use signal handler for wait pid and these sstuff
+
+dose max args for total with pipe or for every command has its own max args?
+
+dont forget to check the output file to return full command
+
+what will happen for & and time mesuerment?
+handle the shit of &  aolone important
+
+dose the 2> file append in the run ? or it ovverite in every error ?
+
+
+dose we use my_tee only after pipe? or it might be used in left command
+
+
+for instance if we put wrong command the error will be shown twice
+
+
+ ithink every command and its args thus the command line limit of args only works when i have command
+
+can done be after pipe ?
+
+
+    char *args[] = {"rlimit", "set", "cpu=2:4", "mem=20", "nofile=3:4","echo ", "hello","2>", NULL};
+
+HARD LIMIT AND SOFT LIMIT DEBUG TODO
+
+
+
+//////////////////////////////////////
+ /*
+char **check_rsc_lmt(char **argu) {
+        // Basic validation
+    if (!argu || !argu[0]) {
+        return NULL;
+    }
+
+    // Check if this is a rlimit command
+    if (strcmp(argu[0], "rlimit") != 0) {
+        // Not a rlimit command - make a DEEP COPY of the arguments
+        int len = 0;
+        while (argu[len]) len++;
+
+        char **new_args = malloc((len + 1) * sizeof(char *));
+        if (!new_args) {
+            return NULL;
+        }
+
+        for (int i = 0; i < len; i++) {
+            new_args[i] = strdup(argu[i]);
+            if (!new_args[i]) {
+                // Clean up if strdup fails
+                for (int j = 0; j < i; j++) {
+                    free(new_args[j]);
+                }
+                free(new_args);
+                return NULL;
+            }
+        }
+        new_args[len] = NULL;
+
+        if (args_len) *args_len = len;
+        return new_args;
+    }
+
+    // Handle 'rlimit show' command
+    if (argu[1] && strcmp(argu[1], "show") == 0) {
+        if (argu[2] == NULL) {
+            // Show all resource limits when no specific resource is mentioned
+            show_all_resource_limits();
+        } else {
+            // Show limit for a specific resource
+            int rtype = get_resource_type(argu[2]);
+            if (rtype == -1) {
+                printf("ERR_RESOURCE: Unknown resource '%s'\n", argu[2]);
+            } else {
+                show_resource_limit(argu[2], rtype);
+            }
+        }
+
+        // Return empty command array to indicate we've handled the command
+        char **empty_cmd = safe_malloc(sizeof(char*));
+        empty_cmd[0] = NULL;
+        return empty_cmd;
+    }
+
+    // Handle 'rlimit set' command
+    if (!argu[1] || strcmp(argu[1], "set") != 0) {
+        printf("ERR: Unknown rlimit command. Use 'rlimit set' or 'rlimit show'\n");
+        return NULL;
+    }
+
+    // Set up signal handlers for resource limit violations
+    signal(SIGXCPU, sigxcpu_handler);  // CPU time limit
+    signal(SIGXFSZ, sigxfsz_handler);  // File size limit
+
+    // Allocate new_args array here to avoid potential memory leak
+    char **new_args = NULL;
+    int i = 2;
+
+    for (; argu[i]; i++) {
+        if (!strchr(argu[i], '=')) break;
+
+        char resource[MAX_INPUT_LENGTH];
+        char soft_str[MAX_INPUT_LENGTH], hard_str[MAX_INPUT_LENGTH];
+
+        // Initialize hard_str to empty to handle the case when only soft limit is provided
+        hard_str[0] = '\0';
+
+        if (sscanf(argu[i], "%[^=]=%[^:]:%s", resource, soft_str, hard_str) < 2) {
+            printf("ERR_FORMAT in: %s\n", argu[i]);
+            return NULL;
+        }
+
+        rlim_t soft = parse_value_with_unit(soft_str);
+        rlim_t hard = strlen(hard_str) ? parse_value_with_unit(hard_str) : soft;
+
+        int rtype = get_resource_type(resource);
+        if (rtype == -1) {
+            printf("ERR_RESOURCE in: %s\n", resource);
+            return NULL;
+        }
+
+        // Set the resource limit
+        struct rlimit lim = { .rlim_cur = soft, .rlim_max = hard };
+        if (setrlimit(rtype, &lim) != 0) {
+            // Specific error handling based on errno
+            switch (errno) {
+                case EPERM:
+                    printf("ERR: Permission denied setting %s limit\n", resource);
+                    break;
+                case EINVAL:
+                    printf("ERR: Invalid value for %s limit\n", resource);
+                    break;
+                default:
+                    perror("setrlimit");
+            }
+            return NULL;
+        }
+
+        // Print confirmation with appropriate units based on the resource type
+        const char* unit = "";
+        unsigned long long soft_display = soft;
+        unsigned long long hard_display = hard;
+
+        if (rtype == RLIMIT_FSIZE || rtype == RLIMIT_AS) {
+            // Display memory/file sizes in human-readable format
+            if (soft >= 1024*1024*1024) {
+                soft_display = soft / (1024*1024*1024);
+                unit = "GB";
+            } else if (soft >= 1024*1024) {
+                soft_display = soft / (1024*1024);
+                unit = "MB";
+            } else if (soft >= 1024) {
+                soft_display = soft / 1024;
+                unit = "KB";
+            } else {
+                unit = "B";
+            }
+
+            printf("✓ Resource %-8s → soft: %llu %s, hard: ",
+                   resource, soft_display, unit);
+
+            // Handle hard limit display with appropriate units
+            if (hard >= 1024*1024*1024) {
+                hard_display = hard / (1024*1024*1024);
+                unit = "GB";
+            } else if (hard >= 1024*1024) {
+                hard_display = hard / (1024*1024);
+                unit = "MB";
+            } else if (hard >= 1024) {
+                hard_display = hard / 1024;
+                unit = "KB";
+            } else {
+                unit = "B";
+            }
+            printf("%llu %s\n", hard_display, unit);
+        } else if (rtype == RLIMIT_CPU) {
+            // CPU time is displayed in seconds
+            printf("✓ Resource %-8s → soft: %llu sec, hard: %llu sec\n",
+                   resource, soft_display, hard_display);
+        } else {
+            // Other resources like nofile/nproc don't need special unit handling
+            printf("✓ Resource %-8s → soft: %llu, hard: %llu\n",
+                   resource, soft_display, hard_display);
+        }
+    }
+
+    // Create a new array for the remaining arguments
+    new_args = safe_malloc((i + 1) * sizeof(char *));
+
+    int j = 0;
+    for (; argu[i]; i++, j++) {
+        new_args[j] = argu[i];
+    }
+    new_args[j] = NULL;  // Null-terminate the array
+    return new_args;  // Return the new array with the remaining arguments
+}
+*/

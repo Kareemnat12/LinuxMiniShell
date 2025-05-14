@@ -1,0 +1,6 @@
+✅ N | N
+ls | grep txt
+
+D | N
+
+rm -rf / | echo "hello" // should handle the dangreius stuff

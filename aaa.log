@@ -1,0 +1,14 @@
+exec failed: No such file or directory
+
+=================================================================
+==26214==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 3 byte(s) in 1 object(s) allocated from:
+    #0 0x7fe7af7b14e8 in strdup ../../../../src/libsanitizer/asan/asan_interceptors.cpp:578
+    #1 0x5626d56ed039 in split_to_args /mnt/c/Users/karee/CLionProjects/LinuxMiniShell/ex2_final.c:891
+    #2 0x5626d56eef8f in main /mnt/c/Users/karee/CLionProjects/LinuxMiniShell/ex2_final.c:1577
+    #3 0x7fe7af4d21c9 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:58
+    #4 0x7fe7af4d228a in __libc_start_main_impl ../csu/libc-start.c:360
+    #5 0x5626d56e98c4 in _start (/mnt/c/Users/karee/CLionProjects/LinuxMiniShell/ex2_final+0x58c4) (BuildId: 53d643eadcbb1ac73bdf239204a5333786270a89)
+
+SUMMARY: AddressSanitizer: 3 byte(s) leaked in 1 allocation(s).
