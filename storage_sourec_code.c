@@ -24,17 +24,11 @@ const char delim[] = " ";
 /**** CUSTOM COMMANDS STRUCTURE ****/
 typedef struct {
     const char *name;
-    int (*handler)(char** args, int args_len);  // Update signature to match both handlers
+    int (*handler)(void);
     int requires_pipe;
     int supports_append;
     int min_args;
 } CustomCommand;
-
-typedef struct {
-    int rows;
-    int cols;
-    int* data; // 1D array storing matrix elements row-wise
-} Matrix;
 
 /**** FUNCTION PROTOTYPES ****/
 // Input handling
@@ -78,20 +72,13 @@ void* safe_malloc(size_t size);
 void restore_stderr(void);
 
 // Custom commands
-int my_tee_handler(char** args, int args_len);
+int my_tee_handler(void);
 
-
-//Matrix oprations
-int mcalc_handler(char** args, int args_len);
-int parse_input(const char* input, Matrix* matrices, int* matrix_count, char* operation_out);
-int check_same_dimensions(Matrix* matrices, int count);
-void free_matrices(Matrix* matrices, int count);
 /**** GLOBAL VARIABLES ****/
 // Custom commands table
 CustomCommand custom_commands[] = {
-        {"my_tee", my_tee_handler,                1, 1, 1}, // my_tee requires pipe, supports append, needs at least 1 arg
-        {"mcalc",   mcalc_handler, 0, 0, 4},
-        {NULL, NULL,                              0, 0, 0}                // Terminator entry
+        {"my_tee", my_tee_handler, 1, 1, 1}, // my_tee requires pipe, supports append, needs at least 1 arg
+        {NULL, NULL, 0, 0, 0}                // Terminator entry
 };
 
 // Command handling
@@ -595,7 +582,7 @@ char **check_rsc_lmt(char **argu, int *args_len) {
 }
 
 // Implementation of my_tee command handler
-int my_tee_handler(char** args, int args_len)  {
+int my_tee_handler(void) {
     close(pipefd[1]);  // Close write end (only reading)
 
     int bytes;
@@ -1167,34 +1154,7 @@ int main(int argc, char* argv[]) {
             r_args = NULL;
             continue;
         }
-        if (l_args[0]) {
-            const CustomCommand* cmd = find_custom_command(l_args[0]);
-            if (cmd != NULL) {
-                // It's a custom command
-                if (l_args_len - 1 < cmd->min_args) {
-                    printf("ERR: Not enough arguments for %s\n", cmd->name);
-                    free_args(l_args);
-                    free_args(r_args);
-                    l_args = NULL;
-                    r_args = NULL;
-                    close(pipefd[0]);
-                    close(pipefd[1]);
-                    continue;
-                } else {
-                    // Execute the custom command handler
-                    cmd->handler(l_args, l_args_len);
 
-                    // Skip the normal fork execution since we handled it
-                    free_args(l_args);
-                    free_args(r_args);
-                    l_args = NULL;
-                    r_args = NULL;
-                    close(pipefd[0]);
-                    close(pipefd[1]);
-                    continue;
-                }
-            }
-        }
         // Execute left command
         left_pid = fork();
         if (left_pid < 0) {
@@ -1261,8 +1221,8 @@ int main(int argc, char* argv[]) {
                         printf("ERR: Not enough arguments for %s\n", cmd->name);
                     } else {
                         // Execute the custom command handler
-                    }                        cmd->handler(r_args, r_args_len);
-
+                        cmd->handler();
+                    }
                 } else {
                     // Standard pipe to external command
                     right_pid = fork();
@@ -1335,110 +1295,15 @@ int main(int argc, char* argv[]) {
 
 /// EX3 SOLUITONS STUFF
 
+typedef struct {
+    int rows;
+    int cols;
+    int* data; // 1D array storing matrix elements row-wise
+} Matrix;
 
-
-int mcalc_handler(char** args, int args_len) {
-    // We need at least the command name, two matrices and an operation
-    if (args_len < 4) {
-        fprintf(stderr, "ERR_MAT_INPUT\n");
-        return 1;
-    }
-
-    // Reconstruct the mcalc command string
-    char mcalc_cmd[MAX_INPUT_LENGTH] = "mcalc ";
-    for (int i = 1; i < args_len; i++) {
-        strcat(mcalc_cmd, "\"");
-        strcat(mcalc_cmd, args[i]);
-        strcat(mcalc_cmd, "\" ");
-    }
-
-    // Parse the command
-    Matrix matrices[MAX_MATRICES];
-    int matrix_count = 0;
-    char operation[16];
-
-    if (!parse_input(mcalc_cmd, matrices, &matrix_count, operation)) {
-        return 1;
-    }
-
-    // If parsing was successful, perform the operation
-    if (strcmp(operation, "ADD") == 0) {
-        // Addition
-        Matrix result;
-        result.rows = matrices[0].rows;
-        result.cols = matrices[0].cols;
-        result.data = malloc(sizeof(int) * result.rows * result.cols);
-        if (!result.data) {
-            fprintf(stderr, "Memory allocation failed\n");
-            free_matrices(matrices, matrix_count);
-            return 1;
-        }
-
-        // Initialize with first matrix
-        for (int i = 0; i < result.rows * result.cols; i++) {
-            result.data[i] = matrices[0].data[i];
-        }
-
-        // Add remaining matrices
-        for (int m = 1; m < matrix_count; m++) {
-            for (int i = 0; i < result.rows * result.cols; i++) {
-                result.data[i] += matrices[m].data[i];
-            }
-        }
-
-        // Print result in format (rows,cols:val1,val2,...)
-        printf("(");
-        printf("%d,%d:", result.rows, result.cols);
-        for (int i = 0; i < result.rows * result.cols; i++) {
-            printf("%d", result.data[i]);
-            if (i < result.rows * result.cols - 1)
-                printf(",");
-        }
-        printf(")\n");
-
-        free(result.data);
-    }
-    else if (strcmp(operation, "SUB") == 0) {
-        // Subtraction
-        Matrix result;
-        result.rows = matrices[0].rows;
-        result.cols = matrices[0].cols;
-        result.data = malloc(sizeof(int) * result.rows * result.cols);
-        if (!result.data) {
-            fprintf(stderr, "Memory allocation failed\n");
-            free_matrices(matrices, matrix_count);
-            return 1;
-        }
-
-        // Initialize with first matrix
-        for (int i = 0; i < result.rows * result.cols; i++) {
-            result.data[i] = matrices[0].data[i];
-        }
-
-        // Subtract remaining matrices
-        for (int m = 1; m < matrix_count; m++) {
-            for (int i = 0; i < result.rows * result.cols; i++) {
-                result.data[i] -= matrices[m].data[i];
-            }
-        }
-
-        // Print result in format (rows,cols:val1,val2,...)
-        printf("(");
-        printf("%d,%d:", result.rows, result.cols);
-        for (int i = 0; i < result.rows * result.cols; i++) {
-            printf("%d", result.data[i]);
-            if (i < result.rows * result.cols - 1)
-                printf(",");
-        }
-        printf(")\n");
-
-        free(result.data);
-    }
-
-    // Clean up
-    free_matrices(matrices, matrix_count);
-    return 0;
-}
+Matrix matrices[MAX_MATRICES];
+int matrix_count = 0;
+char operation[16];
 
 int is_uppercase(const char* str) {
     for (; *str; str++) {
@@ -1510,7 +1375,8 @@ int check_same_dimensions(Matrix* matrices, int count) {
 
     for (int i = 1; i < count; i++) {
         if (matrices[i].rows != base_rows || matrices[i].cols != base_cols) {
-            fprintf(stderr,"ERR_MAT_INPUT\n");
+            printf("Error: Matrix #%d dimensions (%d,%d) differ from Matrix #1 (%d,%d)\n",
+                   i+1, matrices[i].rows, matrices[i].cols, base_rows, base_cols);
             return 0;
         }
     }
@@ -1519,7 +1385,7 @@ int check_same_dimensions(Matrix* matrices, int count) {
 
 int parse_input(const char* input, Matrix* matrices, int* matrix_count, char* operation_out) {
     if (strncmp(input, "mcalc ", 6) != 0) {
-        fprintf(stderr,"ERR_MAT_INPUT\n");
+        printf("Error: Input must start with 'mcalc'\n");
         return 0;
     }
 
@@ -1530,24 +1396,24 @@ int parse_input(const char* input, Matrix* matrices, int* matrix_count, char* op
     while (*ptr) {
         while (*ptr == ' ') ptr++;
         if (*ptr != '"') {
-            fprintf(stderr,"ERR_MAT_INPUT\n");
+            printf("Error: Expected '\"' at token #%d\n", token_index + 1);
             return 0;
         }
         ptr++; // skip opening quote
 
         const char* end_quote = strchr(ptr, '"');
         if (!end_quote) {
-            fprintf(stderr,"ERR_MAT_INPUT\n");
+            printf("Error: Missing closing '\"' at token #%d\n", token_index + 1);
             return 0;
         }
 
         int len = end_quote - ptr;
         if (len <= 0) {
-            fprintf(stderr,"ERR_MAT_INPUT\n");
+            printf("Error: Empty token at #%d\n", token_index + 1);
             return 0;
         }
         if (len >= sizeof(tokens[token_index])) {
-            fprintf(stderr,"ERR_MAT_INPUT\n");
+            printf("Error: Token too long at #%d\n", token_index + 1);
             return 0;
         }
 
@@ -1556,7 +1422,7 @@ int parse_input(const char* input, Matrix* matrices, int* matrix_count, char* op
 
         token_index++;
         if (token_index > MAX_MATRICES + 1) {
-            fprintf(stderr,"ERR_MAT_INPUT\n");
+            printf("Error: Too many tokens\n");
             return 0;
         }
 
@@ -1564,13 +1430,13 @@ int parse_input(const char* input, Matrix* matrices, int* matrix_count, char* op
     }
 
     if (token_index < 3) {
-        fprintf(stderr,"ERR_MAT_INPUT\n");
+        printf("Error: Must provide at least two matrices and one operation\n");
         return 0;
     }
 
     char* operation = tokens[token_index - 1];
     if (!is_uppercase(operation) || (strcmp(operation, "ADD") != 0 && strcmp(operation, "SUB") != 0)) {
-        fprintf(stderr,"ERR_MAT_INPUT\n");
+        printf("Error: Invalid operation '%s'\n", operation);
         return 0;
     }
     strcpy(operation_out, operation);
@@ -1579,7 +1445,7 @@ int parse_input(const char* input, Matrix* matrices, int* matrix_count, char* op
 
     for (int i = 0; i < matrices_count; i++) {
         if (!parse_matrix(tokens[i], &matrices[i])) {
-            fprintf(stderr,"ERR_MAT_INPUT\n");
+            printf("Error: Invalid matrix format at #%d\n", i + 1);
             for (int j = 0; j < i; j++) free(matrices[j].data);
             return 0;
         }

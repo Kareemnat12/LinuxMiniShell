@@ -1,0 +1,32 @@
+[2025-05-26 14:11:19] Operation: ADD, Matrices: 2, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (1,1,1,1)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-26 14:11:24] Operation: ADD, Matrices: 2, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (1,1,1,1)
+  Stats: Total Ops=2, Errors=0, ADD=2, SUB=0
+--------------------------------------------------
+[2025-05-26 14:13:55] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (1,1,1,1)
+  Matrix #3: (1,1,1,1)
+  Stats: Total Ops=5, Errors=2, ADD=3, SUB=0
+--------------------------------------------------
+[2025-05-26 14:14:14] Operation: SUB, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (1,1,1,1)
+  Matrix #3: (1,1,1,1)
+  Stats: Total Ops=6, Errors=2, ADD=3, SUB=1
+--------------------------------------------------
+[2025-05-26 14:15:06] Operation: ADD, Matrices: 2, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (1,1,1,1)
+  Stats: Total Ops=8, Errors=3, ADD=4, SUB=1
+--------------------------------------------------
