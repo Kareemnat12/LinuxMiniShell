@@ -61,3 +61,21 @@
   Matrix #2: (1,2,3,4)
   Stats: Total Ops=4, Errors=1, ADD=1, SUB=2
 --------------------------------------------------
+[2025-05-27 14:42:46] Operation: ADD, Matrices: 2, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (9,8,7,6)
+  Matrix #2: (1,2,3,4)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-27 14:43:07] Operation: ADD, Matrices: 2, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (9,8,7,6)
+  Matrix #2: (1,2,3,4)
+  Stats: Total Ops=2, Errors=0, ADD=2, SUB=0
+--------------------------------------------------
+[2025-05-27 14:44:43] Operation: ADD, Matrices: 2, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (9,8,7,6)
+  Matrix #2: (1,2,3,4)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------

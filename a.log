@@ -1,0 +1,2 @@
+ls -l : 0.06220 sec
+ls -l | my_tee f2.txt : 0.04637 sec

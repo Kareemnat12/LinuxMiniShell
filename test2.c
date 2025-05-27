@@ -649,33 +649,70 @@ char **check_rsc_lmt(char **argu, int *args_len) {
 }
 
 // Implementation of my_tee command handler
+//int my_tee_handler(void) {
+//    close(pipefd[1]);  // Close write end (only reading)
+//
+//    int bytes;
+//    char buffer[MAX_INPUT_LENGTHH];
+//    char result[MAX_INPUT_LENGTHH];
+//    result[0] = '\0';
+//
+//    // Read all data from pipe
+//    while ((bytes = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
+//        buffer[bytes] = '\0';
+//        strcat(result, buffer);
+//    }
+//
+//    close(pipefd[0]);
+//
+//    // Output to stdout
+//    write(STDOUT_FILENO, result, strlen(result));
+//
+//    // Write to all specified files (skip the first arg which is the command name)
+//    for (int i = 1; i < r_args_len; i++) {
+//        write_to_file(r_args[i], result, append_flg);
+//    }
+//
+//    return 0;
+//}
 int my_tee_handler(void) {
-    close(pipefd[1]);  // Close write end (only reading)
+    // Close the write end we don't need
+    close(pipefd[1]);
 
-    int bytes;
-    char buffer[MAX_INPUT_LENGTHH];
-    char result[MAX_INPUT_LENGTHH];
-    result[0] = '\0';
+    char buffer[4096];
+    ssize_t bytes_read;
 
-    // Read all data from pipe
-    while ((bytes = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
-        buffer[bytes] = '\0';
-        strcat(result, buffer);
+    // Open the output file
+    FILE *file = NULL;
+    if (r_args_len > 1) {
+        // Check if we should append
+        file = fopen(r_args[1], append_flg ? "a" : "w");
+        if (!file) {
+            perror("my_tee: file open error");
+            close(pipefd[0]);
+            return 1;
+        }
     }
 
+    // Read from pipe and write to stdout and file
+    while ((bytes_read = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
+        // Write to stdout
+        if (write(STDOUT_FILENO, buffer, bytes_read) != bytes_read) {
+            perror("my_tee: write to stdout error");
+        }
+
+        // Write to file if opened
+        if (file && fwrite(buffer, 1, bytes_read, file) != bytes_read) {
+            perror("my_tee: write to file error");
+        }
+    }
+
+    // Clean up
     close(pipefd[0]);
-
-    // Output to stdout
-    write(STDOUT_FILENO, result, strlen(result));
-
-    // Write to all specified files (skip the first arg which is the command name)
-    for (int i = 1; i < r_args_len; i++) {
-        write_to_file(r_args[i], result, append_flg);
-    }
+    if (file) fclose(file);
 
     return 0;
 }
-
 // Gets user input using a static buffer
 void get_string(char* buffer, size_t buffer_size) {
     buffer[0] = '\0';
@@ -1219,7 +1256,7 @@ int main(int argc, char* argv[]) {
 
         // Create pipe
         if (pipe(pipefd) == -1) {
-            perror("pipe");
+            perror("pipe creation failed");
             free_args(l_args);
             free_args(r_args);
             l_args = NULL;
