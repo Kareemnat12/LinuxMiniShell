@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <asm-generic/errno-base.h>
 #include <errno.h>
+#include <pthread.h>
 
 /**** CONSTANTS ****/
 #define MAX_INPUT_LENGTH 1024
@@ -86,7 +87,9 @@ int check_same_dimensions(Matrix* matrices, int count);
 void free_matrices(Matrix* matrices, int count);
 int parse_matrix(const char* token, Matrix* matrix);
 int is_uppercase(const char* str);
-//
+void* matrix_thread_operation(void* arg);
+Matrix copy_matrix(Matrix* original);
+Matrix hierarchical_matrix_calculation(Matrix* matrices, int matrix_count, char* operation);//
 
 
 /////MONITORING
@@ -1615,12 +1618,123 @@ int parse_input(const char* input, Matrix* matrices, int* matrix_count, char* op
 //    free_matrices(matrices, matrix_count);
 //}
 
+//void mcalc_handler(char *input) {
+//    // Allocate memory for matrices and operation
+//    Matrix matrices[MAX_MATRICES];
+//    char operation[16];
+//    int matrix_count = 0;
+//    int success = 0;
+//
+//    matrix_stats.operation_count++;
+//
+//    // Parse the input
+//    if (!parse_input(input, matrices, &matrix_count, operation)) {
+//        fprintf(stderr, "ERR_MAT_INPUT\n");
+//        matrix_stats.error_count++;
+//        return;
+//    }
+//
+//    matrix_stats.total_matrices_processed += matrix_count;
+//
+//    // Update max matrix size if needed
+//    int matrix_size = matrices[0].rows * matrices[0].cols;
+//    if (matrix_size > matrix_stats.max_matrix_size) {
+//        matrix_stats.max_matrix_size = matrix_size;
+//    }
+//
+//    // If parsing was successful, perform the operation
+//    if (strcmp(operation, "ADD") == 0) {
+//        matrix_stats.add_operations++;
+//
+//        // Addition
+//        Matrix result;
+//        result.rows = matrices[0].rows;
+//        result.cols = matrices[0].cols;
+//        result.data = malloc(sizeof(int) * result.rows * result.cols);
+//        if (!result.data) {
+//            fprintf(stderr, "Memory allocation failed\n");
+//            free_matrices(matrices, matrix_count);
+//            matrix_stats.error_count++;
+//            return;
+//        }
+//
+//        // Initialize with first matrix
+//        for (int i = 0; i < result.rows * result.cols; i++) {
+//            result.data[i] = matrices[0].data[i];
+//        }
+//
+//        // Add remaining matrices
+//        for (int m = 1; m < matrix_count; m++) {
+//            for (int i = 0; i < result.rows * result.cols; i++) {
+//                result.data[i] += matrices[m].data[i];
+//            }
+//        }
+//
+//        // Print result in format (rows,cols:val1,val2,...)
+//        printf("(");
+//        printf("%d,%d:", result.rows, result.cols);
+//        for (int i = 0; i < result.rows * result.cols; i++) {
+//            printf("%d", result.data[i]);
+//            if (i < result.rows * result.cols - 1)
+//                printf(",");
+//        }
+//        printf(")\n");
+//
+//        free(result.data);
+//        success = 1;
+//    }
+//    else if (strcmp(operation, "SUB") == 0) {
+//        matrix_stats.sub_operations++;
+//
+//        // Subtraction
+//        Matrix result;
+//        result.rows = matrices[0].rows;
+//        result.cols = matrices[0].cols;
+//        result.data = malloc(sizeof(int) * result.rows * result.cols);
+//        if (!result.data) {
+//            fprintf(stderr, "Memory allocation failed\n");
+//            free_matrices(matrices, matrix_count);
+//            matrix_stats.error_count++;
+//            return;
+//        }
+//
+//        // Initialize with first matrix
+//        for (int i = 0; i < result.rows * result.cols; i++) {
+//            result.data[i] = matrices[0].data[i];
+//        }
+//
+//        // Subtract remaining matrices
+//        for (int m = 1; m < matrix_count; m++) {
+//            for (int i = 0; i < result.rows * result.cols; i++) {
+//                result.data[i] -= matrices[m].data[i];
+//            }
+//        }
+//
+//        // Print result in format (rows,cols:val1,val2,...)
+//        printf("(");
+//        printf("%d,%d:", result.rows, result.cols);
+//        for (int i = 0; i < result.rows * result.cols; i++) {
+//            printf("%d", result.data[i]);
+//            if (i < result.rows * result.cols - 1)
+//                printf(",");
+//        }
+//        printf(")\n");
+//
+//        free(result.data);
+//        success = 1;
+//    }
+//
+//    // Log the operation
+//    log_matrix_operation(matrices, matrix_count, operation, success);
+//
+//    // Clean up
+//    free_matrices(matrices, matrix_count);
+//}
 void mcalc_handler(char *input) {
     // Allocate memory for matrices and operation
     Matrix matrices[MAX_MATRICES];
     char operation[16];
     int matrix_count = 0;
-    int success = 0;
 
     matrix_stats.operation_count++;
 
@@ -1639,91 +1753,229 @@ void mcalc_handler(char *input) {
         matrix_stats.max_matrix_size = matrix_size;
     }
 
-    // If parsing was successful, perform the operation
+    // Update operation statistics
     if (strcmp(operation, "ADD") == 0) {
         matrix_stats.add_operations++;
-
-        // Addition
-        Matrix result;
-        result.rows = matrices[0].rows;
-        result.cols = matrices[0].cols;
-        result.data = malloc(sizeof(int) * result.rows * result.cols);
-        if (!result.data) {
-            fprintf(stderr, "Memory allocation failed\n");
-            free_matrices(matrices, matrix_count);
-            matrix_stats.error_count++;
-            return;
-        }
-
-        // Initialize with first matrix
-        for (int i = 0; i < result.rows * result.cols; i++) {
-            result.data[i] = matrices[0].data[i];
-        }
-
-        // Add remaining matrices
-        for (int m = 1; m < matrix_count; m++) {
-            for (int i = 0; i < result.rows * result.cols; i++) {
-                result.data[i] += matrices[m].data[i];
-            }
-        }
-
-        // Print result in format (rows,cols:val1,val2,...)
-        printf("(");
-        printf("%d,%d:", result.rows, result.cols);
-        for (int i = 0; i < result.rows * result.cols; i++) {
-            printf("%d", result.data[i]);
-            if (i < result.rows * result.cols - 1)
-                printf(",");
-        }
-        printf(")\n");
-
-        free(result.data);
-        success = 1;
-    }
-    else if (strcmp(operation, "SUB") == 0) {
+    } else if (strcmp(operation, "SUB") == 0) {
         matrix_stats.sub_operations++;
-
-        // Subtraction
-        Matrix result;
-        result.rows = matrices[0].rows;
-        result.cols = matrices[0].cols;
-        result.data = malloc(sizeof(int) * result.rows * result.cols);
-        if (!result.data) {
-            fprintf(stderr, "Memory allocation failed\n");
-            free_matrices(matrices, matrix_count);
-            matrix_stats.error_count++;
-            return;
-        }
-
-        // Initialize with first matrix
-        for (int i = 0; i < result.rows * result.cols; i++) {
-            result.data[i] = matrices[0].data[i];
-        }
-
-        // Subtract remaining matrices
-        for (int m = 1; m < matrix_count; m++) {
-            for (int i = 0; i < result.rows * result.cols; i++) {
-                result.data[i] -= matrices[m].data[i];
-            }
-        }
-
-        // Print result in format (rows,cols:val1,val2,...)
-        printf("(");
-        printf("%d,%d:", result.rows, result.cols);
-        for (int i = 0; i < result.rows * result.cols; i++) {
-            printf("%d", result.data[i]);
-            if (i < result.rows * result.cols - 1)
-                printf(",");
-        }
-        printf(")\n");
-
-        free(result.data);
-        success = 1;
     }
+
+    // Use hierarchical calculation with threads
+    Matrix result = hierarchical_matrix_calculation(matrices, matrix_count, operation);
+
+    // Check if calculation succeeded
+    if (!result.data) {
+        fprintf(stderr, "Matrix calculation failed\n");
+        matrix_stats.error_count++;
+        free_matrices(matrices, matrix_count);
+        return;
+    }
+
+    // Print result in format (rows,cols:val1,val2,...)
+    printf("(");
+    printf("%d,%d:", result.rows, result.cols);
+    for (int i = 0; i < result.rows * result.cols; i++) {
+        printf("%d", result.data[i]);
+        if (i < result.rows * result.cols - 1)
+            printf(",");
+    }
+    printf(")\n");
 
     // Log the operation
-    log_matrix_operation(matrices, matrix_count, operation, success);
+    log_matrix_operation(matrices, matrix_count, operation, 1);
 
     // Clean up
+    free(result.data);
     free_matrices(matrices, matrix_count);
+}
+typedef struct {
+    Matrix* matrix1;
+    Matrix* matrix2;
+    Matrix* result;
+    char operation[16];
+} ThreadData;
+
+// Thread function for matrix operations
+void* matrix_thread_operation(void* arg) {
+    ThreadData* data = (ThreadData*)arg;
+
+    // Allocate memory for result matrix
+    data->result->rows = data->matrix1->rows;
+    data->result->cols = data->matrix1->cols;
+    data->result->data = malloc(sizeof(int) * data->result->rows * data->result->cols);
+
+    if (!data->result->data) {
+        fprintf(stderr, "Memory allocation failed in thread\n");
+        pthread_exit(NULL);
+    }
+
+    // Copy first matrix to result
+    for (int i = 0; i < data->result->rows * data->result->cols; i++) {
+        data->result->data[i] = data->matrix1->data[i];
+    }
+
+    // Perform operation based on operation type
+    if (strcmp(data->operation, "ADD") == 0) {
+        for (int i = 0; i < data->result->rows * data->result->cols; i++) {
+            data->result->data[i] += data->matrix2->data[i];
+        }
+    } else if (strcmp(data->operation, "SUB") == 0) {
+        for (int i = 0; i < data->result->rows * data->result->cols; i++) {
+            data->result->data[i] -= data->matrix2->data[i];
+        }
+    }
+
+    pthread_exit(NULL);
+}
+
+// Function to create a deep copy of a matrix
+Matrix copy_matrix(Matrix* original) {
+    Matrix copy;
+    copy.rows = original->rows;
+    copy.cols = original->cols;
+    copy.data = malloc(sizeof(int) * copy.rows * copy.cols);
+
+    if (!copy.data) {
+        fprintf(stderr, "Memory allocation failed\n");
+        copy.rows = 0;
+        copy.cols = 0;
+        return copy;
+    }
+
+    for (int i = 0; i < copy.rows * copy.cols; i++) {
+        copy.data[i] = original->data[i];
+    }
+
+    return copy;
+}
+
+// Function to perform hierarchical matrix calculation
+Matrix hierarchical_matrix_calculation(Matrix* matrices, int matrix_count, char* operation) {
+    if (matrix_count == 0) {
+        fprintf(stderr, "No matrices to process\n");
+        Matrix empty = {0, 0, NULL};
+        return empty;
+    }
+
+    if (matrix_count == 1) {
+        // Only one matrix, create a deep copy and return it
+        return copy_matrix(&matrices[0]);
+    }
+
+    // Make deep copies of input matrices to avoid modifying originals
+    Matrix* working_matrices = malloc(sizeof(Matrix) * matrix_count);
+    if (!working_matrices) {
+        fprintf(stderr, "Memory allocation failed\n");
+        Matrix empty = {0, 0, NULL};
+        return empty;
+    }
+
+    for (int i = 0; i < matrix_count; i++) {
+        working_matrices[i] = copy_matrix(&matrices[i]);
+        if (!working_matrices[i].data) {
+            // Clean up previously allocated memory
+            for (int j = 0; j < i; j++) {
+                free(working_matrices[j].data);
+            }
+            free(working_matrices);
+            Matrix empty = {0, 0, NULL};
+            return empty;
+        }
+    }
+
+    // Start hierarchical processing
+    int current_count = matrix_count;
+
+    while (current_count > 1) {
+        int pairs = current_count / 2;
+        int next_count = pairs + (current_count % 2);
+        Matrix* next_level = malloc(sizeof(Matrix) * next_count);
+
+        if (!next_level) {
+            // Clean up
+            for (int i = 0; i < current_count; i++) {
+                free(working_matrices[i].data);
+            }
+            free(working_matrices);
+            Matrix empty = {0, 0, NULL};
+            return empty;
+        }
+
+        // Allocate thread data and thread objects
+        ThreadData* thread_data = malloc(sizeof(ThreadData) * pairs);
+        pthread_t* threads = malloc(sizeof(pthread_t) * pairs);
+
+        if (!thread_data || !threads) {
+            // Clean up
+            for (int i = 0; i < current_count; i++) {
+                free(working_matrices[i].data);
+            }
+            free(working_matrices);
+            free(next_level);
+            if (thread_data) free(thread_data);
+            if (threads) free(threads);
+            Matrix empty = {0, 0, NULL};
+            return empty;
+        }
+
+        // Create and start threads for each pair
+        for (int i = 0; i < pairs; i++) {
+            thread_data[i].matrix1 = &working_matrices[i*2];
+            thread_data[i].matrix2 = &working_matrices[i*2 + 1];
+            thread_data[i].result = &next_level[i];
+            strcpy(thread_data[i].operation, operation);
+
+            if (pthread_create(&threads[i], NULL, matrix_thread_operation, &thread_data[i]) != 0) {
+                fprintf(stderr, "Failed to create thread\n");
+                // Clean up
+                for (int j = 0; j < i; j++) {
+                    pthread_join(threads[j], NULL);
+                    free(next_level[j].data);
+                }
+                for (int j = 0; j < current_count; j++) {
+                    free(working_matrices[j].data);
+                }
+                free(working_matrices);
+                free(next_level);
+                free(thread_data);
+                free(threads);
+                Matrix empty = {0, 0, NULL};
+                return empty;
+            }
+        }
+
+        // If odd number of matrices, move the last one to next level
+        if (current_count % 2 == 1) {
+            next_level[next_count-1] = working_matrices[current_count-1];
+            // Prevent this memory from being freed later
+            working_matrices[current_count-1].data = NULL;
+        }
+
+        // Wait for all threads to complete
+        for (int i = 0; i < pairs; i++) {
+            pthread_join(threads[i], NULL);
+        }
+
+        // Clean up memory from current level
+        for (int i = 0; i < current_count; i++) {
+            if (working_matrices[i].data) {
+                free(working_matrices[i].data);
+            }
+        }
+        free(working_matrices);
+
+        // Move to next level
+        working_matrices = next_level;
+        current_count = next_count;
+
+        // Free thread resources
+        free(thread_data);
+        free(threads);
+    }
+
+    // At this point, working_matrices has only one matrix - the final result
+    Matrix result = working_matrices[0];
+    free(working_matrices); // Just free the array, not the data inside
+
+    return result;
 }

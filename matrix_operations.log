@@ -30,3 +30,34 @@
   Matrix #2: (1,1,1,1)
   Stats: Total Ops=8, Errors=3, ADD=4, SUB=1
 --------------------------------------------------
+[2025-05-27 13:19:21] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-27 13:20:17] Operation: SUB, Matrices: 2, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (9,8,7,6)
+  Matrix #2: (1,2,3,4)
+  Stats: Total Ops=2, Errors=0, ADD=1, SUB=1
+--------------------------------------------------
+[2025-05-27 13:20:33] Operation: SUB, Matrices: 2, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (9,8,7,6)
+  Matrix #2: (1,2,3,4)
+  Stats: Total Ops=1, Errors=0, ADD=0, SUB=1
+--------------------------------------------------
+[2025-05-27 13:21:03] Operation: SUB, Matrices: 2, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (9,8,7,6)
+  Matrix #2: (1,2,3,4)
+  Stats: Total Ops=2, Errors=0, ADD=0, SUB=2
+--------------------------------------------------
+[2025-05-27 13:46:14] Operation: ADD, Matrices: 2, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (9,8,7,6)
+  Matrix #2: (1,2,3,4)
+  Stats: Total Ops=4, Errors=1, ADD=1, SUB=2
+--------------------------------------------------

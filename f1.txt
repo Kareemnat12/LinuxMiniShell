@@ -1,0 +1,17 @@
+total 336
+drwxrwxrwx 1 kareem kareem   512 May 23 21:11 STUFF
+-rwxrwxrwx 1 kareem kareem     0 May 27 13:20 a.log
+-rwxrwxrwx 1 kareem kareem     0 May 25 09:25 aa.log
+-rwxrwxrwx 1 kareem kareem 45344 May 26 13:38 ex2
+-rwxrwxrwx 1 kareem kareem 49439 May 26 11:40 ex2.c
+-rwxrwxrwx 1 kareem kareem    60 May 14 14:40 f.txt
+-rwxrwxrwx 1 kareem kareem  2329 May 27 13:46 matrix_operations.log
+-rwxrwxrwx 1 kareem kareem 16896 May 25 11:11 mcalc
+-rwxrwxrwx 1 kareem kareem  5691 May 25 11:40 mcalc.c
+-rwxrwxrwx 1 kareem kareem 16864 May 23 22:00 mtrix
+-rwxrwxrwx 1 kareem kareem     0 May 26 13:43 out.log
+-rwxrwxrwx 1 kareem kareem 44995 May 26 10:52 storage_sourec_code.c
+-rwxrwxrwx 1 kareem kareem 16400 May 27 11:42 studies
+-rwxrwxrwx 1 kareem kareem  2697 May 27 11:42 studies.c
+-rwxrwxrwx 1 kareem kareem 50008 May 27 13:20 test2
+-rwxrwxrwx 1 kareem kareem 62566 May 27 13:17 test2.c
