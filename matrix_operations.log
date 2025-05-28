@@ -79,3 +79,479 @@
   Matrix #2: (1,2,3,4)
   Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
 --------------------------------------------------
+[2025-05-28 19:23:03] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 19:55:23] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 19:55:35] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=2, Errors=0, ADD=2, SUB=0
+--------------------------------------------------
+[2025-05-28 19:56:57] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:20] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:39] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=2, Errors=0, ADD=2, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:40] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=3, Errors=0, ADD=3, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:40] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=4, Errors=0, ADD=4, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:41] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=5, Errors=0, ADD=5, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:41] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=6, Errors=0, ADD=6, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:41] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=7, Errors=0, ADD=7, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:42] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=8, Errors=0, ADD=8, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:42] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=9, Errors=0, ADD=9, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:43] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=10, Errors=0, ADD=10, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:43] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=11, Errors=0, ADD=11, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:44] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=12, Errors=0, ADD=12, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:44] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=13, Errors=0, ADD=13, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:45] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=14, Errors=0, ADD=14, SUB=0
+--------------------------------------------------
+[2025-05-28 20:41:49] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=15, Errors=0, ADD=15, SUB=0
+--------------------------------------------------
+[2025-05-28 20:42:06] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 20:42:16] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=2, Errors=0, ADD=2, SUB=0
+--------------------------------------------------
+[2025-05-28 20:44:09] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 20:44:30] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 20:44:36] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=2, Errors=0, ADD=2, SUB=0
+--------------------------------------------------
+[2025-05-28 20:45:17] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 20:46:52] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=2, Errors=0, ADD=2, SUB=0
+--------------------------------------------------
+[2025-05-28 20:54:46] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 20:55:18] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 20:55:26] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 20:55:29] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=2, Errors=0, ADD=2, SUB=0
+--------------------------------------------------
+[2025-05-28 20:56:46] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 21:02:32] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 21:04:04] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 21:08:47] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 21:11:59] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:13] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:30] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=2, Errors=0, ADD=2, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:31] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=3, Errors=0, ADD=3, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:32] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=4, Errors=0, ADD=4, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:32] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=5, Errors=0, ADD=5, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:32] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=6, Errors=0, ADD=6, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=7, Errors=0, ADD=7, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=8, Errors=0, ADD=8, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=9, Errors=0, ADD=9, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=10, Errors=0, ADD=10, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=11, Errors=0, ADD=11, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=12, Errors=0, ADD=12, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=13, Errors=0, ADD=13, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=14, Errors=0, ADD=14, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=15, Errors=0, ADD=15, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=16, Errors=0, ADD=16, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=17, Errors=0, ADD=17, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=18, Errors=0, ADD=18, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=19, Errors=0, ADD=19, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=20, Errors=0, ADD=20, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=21, Errors=0, ADD=21, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=22, Errors=0, ADD=22, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:34] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=23, Errors=0, ADD=23, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:34] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=24, Errors=0, ADD=24, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:34] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=25, Errors=0, ADD=25, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:34] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=26, Errors=0, ADD=26, SUB=0
+--------------------------------------------------
+[2025-05-28 21:20:37] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=27, Errors=0, ADD=27, SUB=0
+--------------------------------------------------
+[2025-05-28 21:22:56] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 21:24:12] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 21:39:57] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 22:03:17] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 22:03:31] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------
+[2025-05-28 22:03:33] Operation: ADD, Matrices: 3, Success: YES
+  Dimensions: (2,2)
+  Matrix #1: (1,1,1,1)
+  Matrix #2: (2,2,2,2)
+  Matrix #3: (3,3,3,3)
+  Stats: Total Ops=1, Errors=0, ADD=1, SUB=0
+--------------------------------------------------

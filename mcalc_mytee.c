@@ -1,3 +1,8 @@
+//this stuff the version that suppoert pip stuff
+// Created by Kareem on 5/28/2025.
+//
+
+
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
@@ -1168,12 +1173,7 @@ int main(int argc, char* argv[]) {
         trim_inplace(left_cmd);
         trim_inplace(right_cmd);
         //check if the command is mcalc
-        if (strncmp(left_cmd, "mcalc ", 6) == 0){
-            mcalc_handler(left_cmd);
-            mcalcFlag_left = 1;
 
-          //  continue;
-        }
         // Split into arguments
         l_args = split_to_args(left_cmd, delim, &l_args_len);
         r_args = split_to_args(right_cmd, delim, &r_args_len);
@@ -1270,7 +1270,7 @@ int main(int argc, char* argv[]) {
             r_args = NULL;
             continue;
         }
-        if (!mcalcFlag_left) {
+
             // Execute left command
             left_pid = fork();
             if (left_pid < 0) {
@@ -1300,7 +1300,22 @@ int main(int argc, char* argv[]) {
                 if (cmd != NULL) {
                     l_args = cmd;
                 }
+                // Handle mcalc command
+                if (l_args_len > 0 && strcmp(l_args[0], "mcalc") == 0) {
+                    // Setup pipe redirection
+                    if (pip_flag) {
+                        if (dup2(pipefd[1], STDOUT_FILENO) < 0) {
+                            perror("dup2");
+                            exit(1);
+                        }
+                    }
+                    close(pipefd[0]);
+                    close(pipefd[1]);
 
+                    // Execute mcalc
+                    int status1 = mcalc_handler(left_cmd);
+                    exit(status1);
+                }
                 if (pip_flag == 0) {
                     // No pipe, just execute the command
                     close(pipefd[0]);
@@ -1321,9 +1336,7 @@ int main(int argc, char* argv[]) {
                 close(pipefd[0]);
                 close(pipefd[1]);
                 handle_execvp_errors_in_child(l_args);}
-            } else {
-                left_pid = getpid(); // Reset left_pid if mcalcFlag_left is set
-            }
+
 
         // Execute right command if pipe exists
         if (pip_flag && r_args) {
@@ -1588,7 +1601,7 @@ int mcalc_handler(char *input) {
     if (!parse_input(input, matrices, &matrix_count, operation)) {
         fprintf(stderr, "ERR_MAT_INPUT\n");
         matrix_stats.error_count++;
-        return;
+        return 1;
     }
 
     matrix_stats.total_matrices_processed += matrix_count;
@@ -1614,7 +1627,7 @@ int mcalc_handler(char *input) {
         fprintf(stderr, "Matrix calculation failed\n");
         matrix_stats.error_count++;
         free_matrices(matrices, matrix_count);
-        return;
+        return 1;
     }
 
     // Print result in format (rows,cols:val1,val2,...)
@@ -1633,6 +1646,7 @@ int mcalc_handler(char *input) {
     // Clean up
     free(result.data);
     free_matrices(matrices, matrix_count);
+    return 0;
 }
 typedef struct {
     Matrix* matrix1;
