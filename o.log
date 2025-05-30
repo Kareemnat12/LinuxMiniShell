@@ -1,1 +1,4 @@
-mcalc "(2,2:1,1,1,1)" "(2,2:1,1,1,1)" "ADD" : 0.00257 sec
+echo hi | my_tee f1.txt : 0.00373 sec
+cat f1.txt : 0.00595 sec
+echo hiiii | my_tee -a f1.txt : 0.00224 sec
+cat f1.txt : 0.00485 sec
